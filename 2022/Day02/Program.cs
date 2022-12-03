@@ -6,7 +6,7 @@ namespace Day02
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Day 01!");
+            Console.WriteLine("Day 02!");
 
             //string inputFile = @"..\..\..\sample_input.txt";
             string inputFile = @"..\..\..\final_input.txt";
