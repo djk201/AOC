@@ -12,6 +12,11 @@ namespace Day03
             string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
+            Run(input);
+        }
+
+        private static void Run(List<string> input)
+        {
             var timer = new Stopwatch();
             timer.Start();
 
@@ -26,9 +31,9 @@ namespace Day03
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time}ms");
 
             timer.Restart();
-            var groups = input.Chunk(3).ToList();
+            var groups = input.Chunk(3);
             var badges = new List<char>();
-            groups.ForEach(x => badges.Add(FindCommonChar(x.ToList())));
+            groups.ToList().ForEach(x => badges.Add(FindCommonChar(x.ToList())));
 
             var answer2 = CalculatePriorities(badges);
             var answer2Time = timer.ElapsedMilliseconds;
@@ -42,9 +47,9 @@ namespace Day03
             return common[0];
         }
 
-        static int CalculatePriorities(List<Char> items)
+        static int CalculatePriorities(List<char> items)
         {
-            return items.Select(x => (int)x >= (int)'a' ? (int)x - 96 : (int)x - 38).Sum();
+            return items.Select(x => x >= 'a' ? x - 96 : x - 38).Sum();
         }
     }
 }
