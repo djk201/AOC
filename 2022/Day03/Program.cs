@@ -20,7 +20,6 @@ namespace Day03
             var timer = new Stopwatch();
             timer.Start();
 
-
             var rucksacksByCompartments = input.Select(x => x.Chunk(x.Length / 2).Select(x => new string(x)));
 
             var matchingItems = new List<char>();
