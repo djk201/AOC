@@ -27,9 +27,10 @@ namespace Day05
             var lastLine = stackInput[stackInput.Count - 1].Trim();
             var maxStacks = int.Parse((lastLine[lastLine.Length - 1]).ToString());
 
+            var movements = CreateMovementsFromInput(movementsInput);
+
             // Part 1
-            List<Stack<string>> stacks = CreateStackFromInput(stackInput, maxStacks);
-            List<List<int>> movements = CreateMovementsFromInput(movementsInput);
+            var stacks = CreateStackFromInput(stackInput, maxStacks);
             string answer1 = ProcessMovementsForPart1(stacks, movements);
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
@@ -58,7 +59,6 @@ namespace Day05
             });
 
             var result = string.Empty;
-
             stacks.ForEach(x => result += x.Peek());
             return result;
         }
@@ -75,7 +75,6 @@ namespace Day05
             });
 
             var answer1 = string.Empty;
-
             stacks.ForEach(x => answer1 += x.Peek());
             return answer1;
         }
