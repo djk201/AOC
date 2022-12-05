@@ -30,6 +30,7 @@ namespace Shared
                     vals.Add(x);
                 }
             });
+            result.Add(vals.ToArray());
             return result;
         }
 
