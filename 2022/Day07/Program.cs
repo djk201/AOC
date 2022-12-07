@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Shared;
+using System.Diagnostics;
 namespace Day07
 {
     internal class Program
@@ -7,8 +8,8 @@ namespace Day07
         {
             Console.WriteLine("Day 07!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -19,21 +20,95 @@ namespace Day07
             var timer = new Stopwatch();
             timer.Start();
 
-            var answer1 = 0;
-            var answer2 = 0;
+            var chunks = input.ChunkBy("$ ls");
 
-            input.ForEach(x =>
+            var rootNode = new Node { Type = Type.Directory, Level = 1, Name = "/" };
+            var directories = new List<Node> { rootNode };
+            var currentNode = rootNode;
+
+            for(var i = 1; i < chunks.Count; i++)
             {
+                chunks[i].ToList().ForEach(x =>
+                {
+                    var parts = x.Split(' ');
 
+                    switch(parts[0])
+                    {
+                        case "$": // cd
+                            if (parts[2] == "..") currentNode = currentNode.Parent;
+                            else
+                            {
+                                var dirNode = new Node
+                                {
+                                    Name = parts[2],
+                                    Type = Type.Directory,
+                                    HasParent = true,
+                                    Parent = currentNode,
+                                    Level = currentNode.Level + 1
+                                };
+                                currentNode.HasChildren = true;
+                                currentNode.ChildNodes.Add(dirNode);
+                                currentNode = dirNode;
+                                directories.Add(dirNode);
+                            }
+                            break;
+                        case "dir":
+                            // do nothing
+                            break;
+                        default:
+                            var fileNode = new Node
+                            {
+                                Name = parts[1],
+                                Size = int.Parse(parts[0]),
+                                Type = Type.File,
+                                HasParent = true,
+                                Parent = currentNode
+                            };
+                            currentNode.HasChildren = true;
+                            currentNode.ChildNodes.Add(fileNode);
+                            break;
+                    }
+                });
+            }
+
+            // Calculate Size of all directories
+            directories.OrderByDescending(x => x.Level).ToList().ForEach(o =>
+            {
+                o.Size = o.ChildNodes.Sum(a => a.Size);
             });
 
+            var answer1 = directories.Where(x => x.Size <= 100000).Sum(y => y.Size);
             var answer1Time = timer.ElapsedMilliseconds;
+            Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
+
             timer.Restart();
 
-            var answer2Time = timer.ElapsedMilliseconds;
+            var requiredSpace = 30000000 - (70000000 - rootNode.Size);
+            var answer2 = directories.OrderBy(x => x.Size).First(y => y.Size >= requiredSpace).Size;
 
-            Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
+            var answer2Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
+
     }
+
+    class Node
+    {
+        public string Name { get; set; }
+        public Type Type { get; set; }
+        public int Size { get; set; }
+        public bool HasChildren { get; set; }
+        public List<Node> ChildNodes { get; set; }
+        public bool HasParent { get; set; }
+        public Node Parent { get; set; }
+        public int Level { get; set; }
+
+        public Node()
+        {
+            ChildNodes = new List<Node>();
+        }
+    }
+
+    public enum Type { Directory, File }
+
 }
