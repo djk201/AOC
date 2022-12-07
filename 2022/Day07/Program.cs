@@ -22,7 +22,7 @@ namespace Day07
 
             var chunks = input.ChunkBy("$ ls");
 
-            var rootNode = new Node { Type = Type.Directory, Level = 1, Name = "/" };
+            var rootNode = new Node { Type = Type.Directory, Level = 1 };
             var directories = new List<Node> { rootNode };
             var currentNode = rootNode;
 
@@ -38,15 +38,7 @@ namespace Day07
                             if (parts[2] == "..") currentNode = currentNode.Parent;
                             else
                             {
-                                var dirNode = new Node
-                                {
-                                    Name = parts[2],
-                                    Type = Type.Directory,
-                                    HasParent = true,
-                                    Parent = currentNode,
-                                    Level = currentNode.Level + 1
-                                };
-                                currentNode.HasChildren = true;
+                                var dirNode = new Node { Type = Type.Directory, Parent = currentNode, Level = currentNode.Level + 1 };
                                 currentNode.ChildNodes.Add(dirNode);
                                 currentNode = dirNode;
                                 directories.Add(dirNode);
@@ -56,15 +48,7 @@ namespace Day07
                             // do nothing
                             break;
                         default:
-                            var fileNode = new Node
-                            {
-                                Name = parts[1],
-                                Size = int.Parse(parts[0]),
-                                Type = Type.File,
-                                HasParent = true,
-                                Parent = currentNode
-                            };
-                            currentNode.HasChildren = true;
+                            var fileNode = new Node { Size = int.Parse(parts[0]), Type = Type.File, Parent = currentNode };
                             currentNode.ChildNodes.Add(fileNode);
                             break;
                     }
@@ -72,10 +56,7 @@ namespace Day07
             }
 
             // Calculate Size of all directories
-            directories.OrderByDescending(x => x.Level).ToList().ForEach(o =>
-            {
-                o.Size = o.ChildNodes.Sum(a => a.Size);
-            });
+            directories.OrderByDescending(x => x.Level).ToList().ForEach(o => o.Size = o.ChildNodes.Sum(a => a.Size));
 
             var answer1 = directories.Where(x => x.Size <= 100000).Sum(y => y.Size);
             var answer1Time = timer.ElapsedMilliseconds;
@@ -94,12 +75,9 @@ namespace Day07
 
     class Node
     {
-        public string Name { get; set; }
         public Type Type { get; set; }
         public int Size { get; set; }
-        public bool HasChildren { get; set; }
         public List<Node> ChildNodes { get; set; }
-        public bool HasParent { get; set; }
         public Node Parent { get; set; }
         public int Level { get; set; }
 
