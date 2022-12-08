@@ -7,11 +7,12 @@ namespace Day08
         {
             Console.WriteLine("Day 08!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
-            var input = File.ReadAllLines(inputFile).ToList();
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
+            var input = File.ReadAllLines(inputFile);
 
-            Run(input);
+            //Run(input);
+            Solution2.Run(input);
         }
 
         private static void Run(List<string> input)
