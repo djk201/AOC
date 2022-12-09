@@ -9,22 +9,24 @@ namespace Day09
 
             string inputFile = @"..\..\..\sample_input.txt";
             //string inputFile = @"..\..\..\final_input.txt";
-            var input = File.ReadAllLines(inputFile).ToList();
+            var input = File.ReadAllLines(inputFile);
 
             Run(input);
         }
 
-        private static void Run(List<string> input)
+        private static void Run(IEnumerable<string> input)
         {
             var timer = new Stopwatch();
             timer.Start();
 
             var answer1 = 0;
 
-            input.ForEach(x =>
+            var motions = input.Select(x =>
             {
-
-            });
+                var parts = x.Split(' ');
+                var motion = new Motion { Direction = parts[0], Steps = int.Parse(parts[1]) };
+                return motion;
+            }).ToList();
 
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
@@ -34,5 +36,16 @@ namespace Day09
             var answer2Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
+
+        private static int[][] CreateMap(IEnumerable<>)
+        {
+
+        }
+    }
+
+    class Motion
+    {
+        public string Direction { get; set; }
+        public int Steps { get; set; }
     }
 }
