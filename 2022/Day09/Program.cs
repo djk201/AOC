@@ -7,8 +7,8 @@ namespace Day09
         {
             Console.WriteLine("Day 09!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile);
 
             Run(input);
@@ -19,14 +19,16 @@ namespace Day09
             var timer = new Stopwatch();
             timer.Start();
 
-            var answer1 = 0;
-
             var motions = input.Select(x =>
             {
                 var parts = x.Split(' ');
                 var motion = new Motion { Direction = parts[0], Steps = int.Parse(parts[1]) };
                 return motion;
             }).ToList();
+
+            var map = CreateMap(motions, out int x, out int y);
+
+            var answer1 = GetTailPositionsVisitedCount(map, motions, x, y);
 
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
@@ -37,9 +39,57 @@ namespace Day09
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
 
-        private static int[][] CreateMap(IEnumerable<>)
+        private static int GetTailPositionsVisitedCount(int[,] map, List<Motion> motions, int startX, int startY)
         {
+            map[startX, startY] = 1;
 
+            motions.ForEach(m =>
+            {
+                for (var i = 0; i < m.Steps; i++)
+            });
+
+            var result = 1;
+            return result;
+        }
+
+        private static int[,] CreateMap(List<Motion> motions, out int x, out int y)
+        {
+            int maxUpDown = 0;
+            int minUpDown = 0;
+            int maxLeftRight = 0;
+            int minLeftRight = 0;
+
+            int upDown = 0;
+            int leftRight = 0;
+
+            motions.ForEach(m =>
+            {
+                switch(m.Direction)
+                {
+                    case "U":
+                        upDown += m.Steps;
+                        maxUpDown = Math.Max(maxUpDown, upDown);
+                        break;
+                    case "D":
+                        upDown -= m.Steps;
+                        minUpDown = Math.Min(minUpDown, upDown);
+                        break;
+                    case "L":
+                        leftRight += m.Steps;
+                        maxLeftRight = Math.Max(maxLeftRight, upDown);
+                        break;
+                    default: //"R
+                        leftRight -= m.Steps;
+                        minLeftRight = Math.Min(minLeftRight, upDown);
+                        break;
+                }
+            });
+
+            x = 0 - minUpDown;
+            y = 0 - minLeftRight;
+
+            var map = new int[maxUpDown - minUpDown, maxLeftRight - minLeftRight];
+            return map;
         }
     }
 
