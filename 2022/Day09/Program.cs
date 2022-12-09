@@ -42,10 +42,31 @@ namespace Day09
         private static int GetTailPositionsVisitedCount(int[,] map, List<Motion> motions, int startX, int startY)
         {
             map[startX, startY] = 1;
+            int xH = startX;
+            int yH = startY;
+            int xT = startX;
+            int yT = startY;
 
             motions.ForEach(m =>
             {
                 for (var i = 0; i < m.Steps; i++)
+                {
+                    switch (m.Direction)
+                    {
+                        case "U":
+                            xH += 1;
+                            break;
+                        case "D":
+                            xH -= 1;
+                            break;
+                        case "R":
+                            yH += 1;
+                            break;
+                        default: //"L
+                            yH -= 1;
+                            break;
+                    }
+                }
             });
 
             var result = 1;
