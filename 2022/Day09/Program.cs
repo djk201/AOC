@@ -11,7 +11,8 @@ namespace Day09
             string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile);
 
-            Run(input);
+            //Run(input);
+            new Solution2().Run(input);
         }
 
         private static void Run(IEnumerable<string> input)
