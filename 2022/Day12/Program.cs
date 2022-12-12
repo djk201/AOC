@@ -8,7 +8,9 @@ namespace Day12
         const int EndValue = (int)'E';
         const int StartValue = (int)'S';
         const int FirstValidStep = (int)'a';
-        List<List<(int, int)>> ValidPaths = new List<List<(int, int)>>();
+        const int LastValidStep = (int)'z';
+        static List<List<(int, int)>> ValidPaths = new List<List<(int, int)>>();
+        static List<(int, int)> Unreacheable = new List<(int, int)>();
 
         static void Main(string[] args)
         {
@@ -16,25 +18,23 @@ namespace Day12
 
             string inputFile = @"..\..\..\sample_input.txt";
             //string inputFile = @"..\..\..\final_input.txt";
-            var input = File.ReadAllLines(inputFile).ToList();
+            var input = File.ReadAllLines(inputFile);
 
-            Run(input);
+            //Run(input);
+            Solution2.Run(input);
         }
 
-        private static void Run(List<string> input)
+        private static void Run(IEnumerable<string> input)
         {
             var timer = new Stopwatch();
             timer.Start();
 
             // Create Map
-            int[,] map = new int[1,1];
+            int[,] map = CreateMap(input.ToList(), out (int, int) startPos);
 
-            // Find Starting Position
-            (int, int) startPos = new (1, 1);
+            CalculateAllValidPaths(map, startPos);
 
-            var allPaths = GetAllValidPaths(map, startPos);
-
-            var answer1 = allPaths.Select(p => p.Count).Min();
+            var answer1 = ValidPaths.Select(p => p.Count).Min();
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
 
@@ -44,45 +44,37 @@ namespace Day12
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
 
-
-        static List<List<(int, int)>> GetAllValidPaths(int[,] map, (int, int) startPos)
+        static int[,] CreateMap(List<string> input, out (int, int) startPos)
         {
-            var result = new List<List<(int, int)>>();
+            startPos = new(0, 0);
+            //var map = input.Select(x => x.ToArray().Select(c => (int)c).ToArray()).ToArray();
+            int[,] map = new int[input.Count(), input[0].Length];
 
-            List<(int, int)> doNotVisit;
-            var currentPos = startPos;
-
-            var currentPath = new List<(int, int)>();
-
-            //currentPath.Push(startPos);
-
-            var allPathsExplored = false;
-            while (!allPathsExplored)
+            for (int i = 0; i < input.Count(); i++)
             {
-                // Get valid next steps
-                List<(int, int)> validNextSteps = new List<(int, int)>();
-
-                foreach (var step in validNextSteps)
+                for(int j = 0; j < input[0].Length; j++)
                 {
-                    var newPathArray = new (int, int)[currentPath.Count];
-                    currentPath.CopyTo(newPathArray);
-                    var newPath = newPathArray.ToList();
-                    newPath.Add(step);
-                    if (map[step.Item1, step.Item2] == EndValue)
+                    map[i, j] = input[i][j];
+                    if (map[i, j] == StartValue)
                     {
-                        continue;
+                        startPos = new (i, j);
                     }
-
                 }
-
             }
-
-            return result;
+            return map;
         }
 
-        private bool ProcessPath(int[,] map, List<(int, int)> currentPath, (int, int) nextStep)
+        static void CalculateAllValidPaths(int[,] map, (int, int) startPos)
         {
-            List<(int, int)> validNextSteps = new List<(int, int)>();
+            var currentPath = new List<(int, int)>();
+            currentPath.Add(startPos);
+
+            CalculatePaths(map, currentPath, startPos);
+        }
+
+        private static bool CalculatePaths(int[,] map, List<(int, int)> currentPath, (int, int) currentStep)
+        {
+            List<(int, int)> validNextSteps = GetValidNextSteps(map, currentPath, currentStep);
 
             foreach(var step in validNextSteps)
             {
@@ -94,27 +86,69 @@ namespace Day12
                 {
                     return true;
                 }
-                if (ProcessPath(map, newPath, step))
+                if (CalculatePaths(map, newPath, step))
                 {
                     ValidPaths.Add(newPath);
                     continue;
+                }
+                else
+                {
+                    Unreacheable.Add(step);
                 }
             }
             return false;
         }
 
-        private List<(int, int)> GetValidNextSteps(int[,] map, List<(int, int)> currentPath, (int, int) currentStep)
+        private static List<(int, int)> GetValidNextSteps(int[,] map, List<(int, int)> currentPath, (int, int) currentStep)
         {
-            for(int i = currentStep.Item1 - 1; i <= currentStep.Item1 + 1; i++)
-            {
-                if (i < 0) continue;
-                for(int j = currentStep.Item2; i <= currentStep.Item2 + 1; i++)
-                {
-                    if (j < 0) continue;
+            var result = new List<(int, int)>();
 
-                    if (map[(i, j)] == EndValue || map[]) { }
+            var stepsToCheck = new List<(int, int)>
+            {
+                (currentStep.Item1, currentStep.Item2 - 1),
+                (currentStep.Item1 - 1, currentStep.Item2),
+                (currentStep.Item1, currentStep.Item2 + 1),
+                (currentStep.Item1 + 1, currentStep.Item2)
+            };
+
+            stepsToCheck.ForEach(x =>
+            {
+                if (IsValidNextStep(map, currentPath, currentStep, x))
+                {
+                    result.Add(x);
                 }
+            });
+
+            return result;
+        }
+
+        static bool IsValidNextStep(int[,] map, List<(int, int)> currentPath, (int, int) currentStep, (int, int) nextStep)
+        {
+            if (nextStep.Item1 < 0 || nextStep.Item2 < 0 
+                || nextStep.Item1 >= map.GetLength(0) || nextStep.Item2 >= map.GetLength(1)) return false;
+            if (nextStep.Item1 == currentStep.Item1 && nextStep.Item2 == currentStep.Item2) return false;
+
+            if (map[currentStep.Item1, currentStep.Item2] == StartValue)
+            {
+                if (map[nextStep.Item1, nextStep.Item2] == FirstValidStep)
+                {
+                    return true;
+                }
+                return false;
             }
+            if (map[nextStep.Item1, nextStep.Item2] == EndValue)
+            {
+                if (map[currentStep.Item1, currentStep.Item2] == LastValidStep)
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            if (map[currentStep.Item1, currentStep.Item2] < map[nextStep.Item1, nextStep.Item2] - 1) return false;
+            if (currentPath.Contains(nextStep) || Unreacheable.Contains(nextStep)) return false;
+
+            return true;
         }
     }
 }
