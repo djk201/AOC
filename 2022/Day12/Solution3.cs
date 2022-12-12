@@ -1,30 +1,18 @@
 ﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace Day12
 {
-    internal class Program
+    internal class Solution3
     {
         const int EndValue = (int)'E';
         const int StartValue = (int)'S';
         const int FirstValidStep = (int)'a';
         const int LastValidStep = (int)'z';
-        static List<List<(int, int)>> ValidPaths = new List<List<(int, int)>>();
-        static List<(int, int)> Unreacheable = new List<(int, int)>();
+        static (int, int) EndPos = new(0, 0);
+        //static List<List<(int, int)>> ValidPaths = new List<List<(int, int)>>();
+        //static List<(int, int)> Unreacheable = new List<(int, int)>();
 
-        static void Main(string[] args)
-        {
-            Console.WriteLine("Day 12!");
-
-            //string inputFile = @"..\..\..\sample_input.txt";
-            string inputFile = @"..\..\..\final_input.txt";
-            var input = File.ReadAllLines(inputFile);
-
-            //Run(input);
-            Solution3.Run(input);
-        }
-
-        private static void Run(IEnumerable<string> input)
+        public static void Run(IEnumerable<string> input)
         {
             var timer = new Stopwatch();
             timer.Start();
@@ -32,9 +20,7 @@ namespace Day12
             // Create Map
             int[,] map = CreateMap(input.ToList(), out (int, int) startPos);
 
-            CalculateAllValidPaths(map, startPos);
-
-            var answer1 = ValidPaths.Select(p => p.Count).Min();
+            var answer1 = CalculateShortestPath(map, startPos);
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
 
@@ -52,54 +38,61 @@ namespace Day12
 
             for (int i = 0; i < input.Count(); i++)
             {
-                for(int j = 0; j < input[0].Length; j++)
+                for (int j = 0; j < input[0].Length; j++)
                 {
                     map[i, j] = input[i][j];
                     if (map[i, j] == StartValue)
                     {
-                        startPos = new (i, j);
+                        startPos = new(i, j);
+                    }
+                    else if (map[i, j] == EndValue)
+                    {
+                        EndPos = new(i, j);
                     }
                 }
             }
             return map;
         }
 
-        static void CalculateAllValidPaths(int[,] map, (int, int) startPos)
+        static int CalculateShortestPath(int[,] map, (int, int) startPos)
         {
-            var currentPath = new List<(int, int)>();
-            currentPath.Add(startPos);
+            
+            Dictionary<(int, int), bool> visitedDict = new Dictionary<(int, int), bool> { { startPos, true } };
+            var isPathFound = false;
 
-            CalculatePaths(map, currentPath, startPos);
-        }
+            List<(int, int)> currentSteps = new List<(int, int)> { startPos };
+            int stepCount = 0;
 
-        private static bool CalculatePaths(int[,] map, List<(int, int)> currentPath, (int, int) currentStep)
-        {
-            List<(int, int)> validNextSteps = GetValidNextSteps(map, currentPath, currentStep);
-
-            foreach(var step in validNextSteps)
+            while (!isPathFound)
             {
-                var newPathArray = new (int, int)[currentPath.Count];
-                currentPath.CopyTo(newPathArray);
-                var newPath = newPathArray.ToList();
-                newPath.Add(step);
-                if (map[step.Item1, step.Item2] == EndValue)
+                stepCount++;
+                var validNextSteps = GetAllValidNextSteps(map, currentSteps, visitedDict);
+                if (validNextSteps.Contains(EndPos))
                 {
-                    return true;
+                    isPathFound = true;
+                    break;
                 }
-                if (CalculatePaths(map, newPath, step))
-                {
-                    ValidPaths.Add(newPath);
-                    continue;
-                }
-                else
-                {
-                    Unreacheable.Add(step);
-                }
+                validNextSteps.ForEach(x => visitedDict[x] = true);
+                currentSteps = validNextSteps;
             }
-            return false;
+            return stepCount;
         }
 
-        private static List<(int, int)> GetValidNextSteps(int[,] map, List<(int, int)> currentPath, (int, int) currentStep)
+
+
+        private static List<(int, int)> GetAllValidNextSteps(int[,] map, List<(int, int)> currentSteps, Dictionary<(int, int), bool> visitedDict)
+        {
+            var result = new List<(int, int)>();
+
+            foreach (var currentStep in currentSteps)
+            {
+                var nextSteps = GetValidNextSteps(map, currentStep, visitedDict);
+                result = result.Union(nextSteps).ToList();
+            }
+            return result;
+        }
+
+        private static List<(int, int)> GetValidNextSteps(int[,] map, (int, int) currentStep, Dictionary<(int, int), bool> visitedDict)
         {
             var result = new List<(int, int)>();
 
@@ -113,7 +106,7 @@ namespace Day12
 
             stepsToCheck.ForEach(x =>
             {
-                if (IsValidNextStep(map, currentPath, currentStep, x))
+                if (IsValidNextStep(map, currentStep, x, visitedDict))
                 {
                     result.Add(x);
                 }
@@ -122,9 +115,9 @@ namespace Day12
             return result;
         }
 
-        static bool IsValidNextStep(int[,] map, List<(int, int)> currentPath, (int, int) currentStep, (int, int) nextStep)
+        static bool IsValidNextStep(int[,] map, (int, int) currentStep, (int, int) nextStep, Dictionary<(int, int), bool> nodeDict)
         {
-            if (nextStep.Item1 < 0 || nextStep.Item2 < 0 
+            if (nextStep.Item1 < 0 || nextStep.Item2 < 0
                 || nextStep.Item1 >= map.GetLength(0) || nextStep.Item2 >= map.GetLength(1)) return false;
             if (nextStep.Item1 == currentStep.Item1 && nextStep.Item2 == currentStep.Item2) return false;
 
@@ -146,9 +139,12 @@ namespace Day12
             }
 
             if (map[currentStep.Item1, currentStep.Item2] < map[nextStep.Item1, nextStep.Item2] - 1) return false;
-            if (currentPath.Contains(nextStep) || Unreacheable.Contains(nextStep)) return false;
+            if (nodeDict.ContainsKey(nextStep)) return false;
 
             return true;
         }
+
+
     }
+
 }

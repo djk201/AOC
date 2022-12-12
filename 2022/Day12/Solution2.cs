@@ -10,6 +10,7 @@ namespace Day12
         const int LastValidStep = (int)'z';
         //static List<List<(int, int)>> ValidPaths = new List<List<(int, int)>>();
         //static List<(int, int)> Unreacheable = new List<(int, int)>();
+        static long ShortestPath = 0;
 
         public static void Run(IEnumerable<string> input)
         {
@@ -19,9 +20,9 @@ namespace Day12
             // Create Map
             int[,] map = CreateMap(input.ToList(), out (int, int) startPos);
 
-            var validPaths = CalculateAllValidPaths(map, startPos);
+            CalculateAllValidPaths(map, startPos);
 
-            var answer1 = validPaths.Select(p => p.Level).Min() - 1;
+            var answer1 = ShortestPath - 1;
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
 
@@ -51,55 +52,41 @@ namespace Day12
             return map;
         }
 
-        static List<Node> CalculateAllValidPaths(int[,] map, (int, int) startPos)
+        static void CalculateAllValidPaths(int[,] map, (int, int) startPos)
         {
-            var rootNode = new Node { Level = 1, X = startPos.Item1, Y = startPos.Item2 };
-            var completePathNodes = new List<Node>();
-            var currentNode = rootNode;
+            Dictionary<(int, int), bool> nodeDict = new Dictionary<(int, int), bool>();
+            nodeDict.Add(startPos, true);
 
-            Dictionary<(int, int), Node> nodeDictionary = new Dictionary<(int, int), Node>();
-            nodeDictionary.Add(rootNode.Position, rootNode);
-
-            CalculatePaths(map, currentNode, nodeDictionary, completePathNodes);
-            return completePathNodes;
+            CalculatePaths(map, startPos, 1, nodeDict);
         }
 
-        private static void CalculatePaths(int[,] map, Node currentNode, Dictionary<(int, int), Node> nodeDict, List<Node> completePathNodes)
+        private static void CalculatePaths(int[,] map, (int, int) currentStep, int stepCount, Dictionary<(int, int), bool> nodeDict)
         {
             //var currentStep = currentNode.Position;
-            List<(int, int)> validNextSteps = GetValidNextSteps(map, currentNode, nodeDict);
+            List<(int, int)> validNextSteps = GetValidNextSteps(map, currentStep, nodeDict);
 
-            currentNode.ChildNodes.AddRange(validNextSteps.Select(x => new Node 
-            { 
-                Level = currentNode.Level + 1, Parent = currentNode, X = x.Item1, Y = x.Item2 
-            }));
-
-            currentNode.ChildNodes.ForEach(n => nodeDict.Add(n.Position, n));
+            validNextSteps.ForEach(s => nodeDict[s] = true);
+            stepCount++;
 
             foreach (var step in validNextSteps)
             {
-                var node = new Node
-                {
-                    Value = map[step.Item1, step.Item2],
-                    Level = currentNode.Level + 1,
-                    Parent = currentNode,
-                    X = step.Item1,
-                    Y = step.Item2
-                };
                 if (map[step.Item1, step.Item2] == EndValue)
                 {
-                    completePathNodes.Add(node);
+                    if (ShortestPath == 0 || ShortestPath > stepCount)
+                    {
+                        ShortestPath = stepCount;
+                    }
                     break;
                 }
-                CalculatePaths(map, node, nodeDict, completePathNodes);
+                CalculatePaths(map, step, stepCount, nodeDict);
             }
+            stepCount--;
 
-            currentNode.ChildNodes.ForEach(n => nodeDict.Remove(n.Position));
+            validNextSteps.ForEach(s => nodeDict[s] = false);
         }
 
-        private static List<(int, int)> GetValidNextSteps(int[,] map, Node currentNode, Dictionary<(int, int), Node> nodeDict)
+        private static List<(int, int)> GetValidNextSteps(int[,] map, (int, int) currentStep, Dictionary<(int, int), bool> nodeDict)
         {
-            var currentStep = currentNode.Position;
             var result = new List<(int, int)>();
 
             var stepsToCheck = new List<(int, int)>
@@ -112,7 +99,7 @@ namespace Day12
 
             stepsToCheck.ForEach(x =>
             {
-                if (IsValidNextStep(map, currentNode, x, nodeDict))
+                if (IsValidNextStep(map, currentStep, x, nodeDict))
                 {
                     result.Add(x);
                 }
@@ -121,9 +108,8 @@ namespace Day12
             return result;
         }
 
-        static bool IsValidNextStep(int[,] map, Node currentNode, (int, int) nextStep, Dictionary<(int, int), Node> nodeDict)
+        static bool IsValidNextStep(int[,] map, (int, int) currentStep, (int, int) nextStep, Dictionary<(int, int), bool> nodeDict)
         {
-            var currentStep = currentNode.Position;
             if (nextStep.Item1 < 0 || nextStep.Item2 < 0
                 || nextStep.Item1 >= map.GetLength(0) || nextStep.Item2 >= map.GetLength(1)) return false;
             if (nextStep.Item1 == currentStep.Item1 && nextStep.Item2 == currentStep.Item2) return false;
