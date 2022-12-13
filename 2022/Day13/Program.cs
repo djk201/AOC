@@ -38,39 +38,29 @@ namespace Day13
         static int GetDecoderKey(List<string> input)
         {
 
-            var packets = input.Where(x => 
-                                            !string.IsNullOrWhiteSpace(x)).Select(y => 
+            var packets = input.Where(x => !string.IsNullOrWhiteSpace(x)).Select(y => 
                                             JsonConvert.DeserializeObject(y) as JArray);
 
-            var firstDividerPackat = new PacketWrapper { IsDividerPacket = true, Packet = JsonConvert.DeserializeObject("[[2]]") as JArray };
-            var secondDividerPacket = new PacketWrapper { IsDividerPacket = true, Packet = JsonConvert.DeserializeObject("[[6]]") as JArray };
+            var firstDividerPackat = JsonConvert.DeserializeObject("[[2]]") as JArray;
+            var secondDividerPacket = JsonConvert.DeserializeObject("[[6]]") as JArray;
 
-            List<PacketWrapper> list = new List<PacketWrapper> { firstDividerPackat, secondDividerPacket }; 
+            List<JArray> list = new List<JArray> { firstDividerPackat, secondDividerPacket }; 
 
             packets.ToList().ForEach(p =>
             {
                 int i = 0;
                 bool? isRightOrder = null;
-                foreach (var pw in list)
+                foreach (var orderedPacket in list)
                 {
-                    isRightOrder = IsRightOrder(p, pw.Packet);
-                    if (isRightOrder != null && isRightOrder.Value)
-                    {
-                        break;
-                    }
+                    isRightOrder = IsRightOrder(p, orderedPacket);
+                    if (isRightOrder != null && isRightOrder.Value) break;
                     i++;
                 };
 
                 if (isRightOrder == null) throw new Exception("isRightOrder is null");
 
-                if (isRightOrder.Value)
-                {
-                    list.Insert(i, new PacketWrapper { Packet = p });
-                }
-                else
-                {
-                    list.Add(new PacketWrapper { Packet = p });
-                }
+                if (isRightOrder.Value) list.Insert(i, p);
+                else list.Add(p);
             });
 
             return (list.IndexOf(firstDividerPackat) + 1) * (list.IndexOf(secondDividerPacket) + 1);
@@ -79,15 +69,11 @@ namespace Day13
         static int GetRightOrderPairScore(List<string> input)
         {
             var pairs = input.ChunkBy(string.Empty).ToList();
-
             var totalScore = 0;
             for (int i = 0; i < pairs.Count; i++)
             {
-                //Console.WriteLine(i);
-                dynamic left = JsonConvert.DeserializeObject(pairs[i][0]);
-                dynamic right = JsonConvert.DeserializeObject(pairs[i][1]);
-
-                if (IsRightOrder(left, right)) totalScore += (i + 1);
+                var converted = pairs[i].Select(x => JsonConvert.DeserializeObject(x) as JArray);
+                if (IsRightOrder(converted.First(), converted.Last()).Value) totalScore += (i + 1);
             }
             return totalScore;
         }
@@ -95,8 +81,7 @@ namespace Day13
         static bool? IsRightOrder(JArray left, JArray right)
         {
             bool? result = null; ;
-            if (!left.Any() && !right.Any()) // both are empty
-                return null;
+            if (!left.Any() && !right.Any()) return null; // both are empty
 
             for (int i=0; i < left.Count; i++)
             {
@@ -104,14 +89,8 @@ namespace Day13
 
                 if (left[i].GetType() == typeof(JValue) && right[i].GetType() == typeof(JValue))
                 {
-                    if (left[i].ToObject<int>() == right[i].ToObject<int>())
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        return left[i].ToObject<int>() < right[i].ToObject<int>();
-                    }
+                    if (left[i].ToObject<int>() == right[i].ToObject<int>()) continue; // value is same
+                    else return left[i].ToObject<int>() < right[i].ToObject<int>();
                 }
 
                 var leftArray = left[i].GetType() == typeof(JArray) ? left[i] as JArray : new JArray(left[i]);
@@ -123,18 +102,9 @@ namespace Day13
                 return result;
             }
 
-            if (result == null && right.Count > left.Count) // left ran out of items
-            {
-                return true;
-            }
+            if (result == null && right.Count > left.Count) return true; // left ran out of items
             
             return result;
         }
-    }
-
-    class PacketWrapper
-    {
-        public bool IsDividerPacket { get; set; }
-        public JArray Packet { get; set; }
     }
 }
