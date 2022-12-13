@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics;
-namespace Day14
+namespace Day15
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Day 14!");
+            Console.WriteLine("Day 15!");
 
             string inputFile = @"..\..\..\sample_input.txt";
             //string inputFile = @"..\..\..\final_input.txt";
