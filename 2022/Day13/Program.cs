@@ -25,6 +25,59 @@ namespace Day13
             var timer = new Stopwatch();
             timer.Start();
 
+            var answer1 = GetRightOrderPairScore(input);
+            var answer1Time = timer.ElapsedMilliseconds;
+            Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
+
+            timer.Restart();
+            var answer2 = GetDecoderKey(input);
+            var answer2Time = timer.ElapsedMilliseconds;
+            Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
+        }
+
+        static int GetDecoderKey(List<string> input)
+        {
+
+            var packets = input.Where(x => 
+                                            !string.IsNullOrWhiteSpace(x)).Select(y => 
+                                            JsonConvert.DeserializeObject(y) as JArray);
+
+            var firstDividerPackat = new PacketWrapper { IsDividerPacket = true, Packet = JsonConvert.DeserializeObject("[[2]]") as JArray };
+            var secondDividerPacket = new PacketWrapper { IsDividerPacket = true, Packet = JsonConvert.DeserializeObject("[[6]]") as JArray };
+
+            List<PacketWrapper> list = new List<PacketWrapper> { firstDividerPackat, secondDividerPacket }; 
+
+            packets.ToList().ForEach(p =>
+            {
+                int i = 0;
+                bool? isRightOrder = null;
+                foreach (var pw in list)
+                {
+                    isRightOrder = IsRightOrder(p, pw.Packet);
+                    if (isRightOrder != null && isRightOrder.Value)
+                    {
+                        break;
+                    }
+                    i++;
+                };
+
+                if (isRightOrder == null) throw new Exception("isRightOrder is null");
+
+                if (isRightOrder.Value)
+                {
+                    list.Insert(i, new PacketWrapper { Packet = p });
+                }
+                else
+                {
+                    list.Add(new PacketWrapper { Packet = p });
+                }
+            });
+
+            return (list.IndexOf(firstDividerPackat) + 1) * (list.IndexOf(secondDividerPacket) + 1);
+        }
+
+        static int GetRightOrderPairScore(List<string> input)
+        {
             var pairs = input.ChunkBy(string.Empty).ToList();
 
             var totalScore = 0;
@@ -36,15 +89,7 @@ namespace Day13
 
                 if (IsRightOrder(left, right)) totalScore += (i + 1);
             }
-
-            var answer1 = totalScore;
-            var answer1Time = timer.ElapsedMilliseconds;
-            Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
-
-            timer.Restart();
-            var answer2 = 0;
-            var answer2Time = timer.ElapsedMilliseconds;
-            Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
+            return totalScore;
         }
 
         static bool? IsRightOrder(JArray left, JArray right)
@@ -85,5 +130,11 @@ namespace Day13
             
             return result;
         }
+    }
+
+    class PacketWrapper
+    {
+        public bool IsDividerPacket { get; set; }
+        public JArray Packet { get; set; }
     }
 }
