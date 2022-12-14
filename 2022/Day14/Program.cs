@@ -33,7 +33,7 @@ namespace Day14
             occupiedPoints = CreateDictionaryWithLinePoints(linesGroup);
             maxBottom = occupiedPoints.Keys.Select(x => x.Item2).Max() + 2;
 
-            var answer2 = GetTotalUnitsOfSandAtRest(occupiedPoints, maxBottom, true);
+            var answer2 = GetTotalUnitsOfSandAtRest(occupiedPoints, maxBottom, true) + 1;
             var answer2Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
@@ -62,26 +62,76 @@ namespace Day14
             while(true)
             {
                 var currentIterationPos = currentPos;
-                currentPos = MoveAllTheWay(currentPos, occupuiedPoints, GetNextStepDown, maxBottom, isWallAtBottom, out bool goingToAbyss);
-                if (goingToAbyss) 
+
+                currentPos = MoveSteps(currentPos, occupuiedPoints, -1, GetNextStepDown, maxBottom, isWallAtBottom, out NoFurtherMovesReason noFurtherMovesReason);
+                if (currentPos == currentIterationPos && noFurtherMovesReason == NoFurtherMovesReason.GoingInAbyss)
                 {
                     currentPos = startPos;
-                    break; 
+                    break;
                 }
-                var positionAfterLeftDiagMove = MoveOneStep(currentPos, occupuiedPoints, GetNextStepDiagLeft);
-                if (positionAfterLeftDiagMove != currentPos)
+                var positionAfterMove = MoveSteps(currentPos, occupuiedPoints, 1, GetNextStepDiagLeft, maxBottom, isWallAtBottom, out noFurtherMovesReason);
+                if (currentPos != positionAfterMove)
                 {
-                    currentPos = positionAfterLeftDiagMove;
+                    currentPos = positionAfterMove;
                     continue;
                 }
-                currentPos = MoveOneStep(positionAfterLeftDiagMove, occupuiedPoints, GetNextStepDiagRight);
+                else if (noFurtherMovesReason == NoFurtherMovesReason.GoingInAbyss)
+                {
+                    currentPos = startPos;
+                    break;
+                }
+                positionAfterMove = MoveSteps(currentPos, occupuiedPoints, 1, GetNextStepDiagRight, maxBottom, isWallAtBottom, out noFurtherMovesReason); ;
 
-                if (currentIterationPos == currentPos) break;
+                if (currentPos != positionAfterMove)
+                {
+                    currentPos = positionAfterMove;
+                    continue;
+                }
+                else if (noFurtherMovesReason == NoFurtherMovesReason.GoingInAbyss)
+                {
+                    currentPos = startPos;
+                    break;
+                }
+
+                if (positionAfterMove == currentIterationPos) break; // no more moves possible
             }
 
             occupuiedPoints[currentPos] = true;
 
             return startPos != currentPos;
+        }
+
+        static (int, int) MoveSteps((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, int stepsToMove, Func<(int, int), (int, int)> getNextStep, int maxBottom, bool isWallAtBottom, out NoFurtherMovesReason noFurtherMovesReason)
+        {
+            var canMove = true;
+            var currentPos = startPos;
+            noFurtherMovesReason = NoFurtherMovesReason.ReachedBottom;
+            var stepCount = 1;
+
+            while (canMove)
+            {
+                (int, int) nextStep = getNextStep(currentPos);
+                if (occupuiedPoints.ContainsKey(nextStep))
+                {
+                    break;
+                }
+                if (nextStep.Item2 >= maxBottom)
+                {
+                    if (!isWallAtBottom)
+                    {
+                        noFurtherMovesReason = NoFurtherMovesReason.GoingInAbyss;
+                        currentPos = startPos;
+                    }
+                    break;
+                }
+                currentPos = nextStep;
+                stepCount++;
+                if (stepsToMove != -1 && stepsToMove < stepCount)
+                {
+                    canMove = false;
+                }
+            }
+            return currentPos;
         }
 
         static (int, int) MoveAllTheWay((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, Func<(int, int), (int, int)> getNextStep, int maxBottom, bool isWallAtBottom, out bool goingToAbyss)
@@ -121,11 +171,6 @@ namespace Day14
         static (int, int) GetNextStepDown((int, int) currentStep) => new(currentStep.Item1, currentStep.Item2 + 1);
         static (int, int) GetNextStepDiagLeft((int, int) currentStep) => new(currentStep.Item1 - 1, currentStep.Item2 + 1);
         static (int, int) GetNextStepDiagRight((int, int) currentStep) => new(currentStep.Item1 + 1, currentStep.Item2 + 1);
-
-        static bool IsStepOccupied((int, int) step, Dictionary<(int, int), bool> occupuiedPoints)
-        {
-            return (occupuiedPoints.ContainsKey(step));
-        }
 
         static (int, int)[] CreateCords(string source)
         {
@@ -170,4 +215,6 @@ namespace Day14
             return result;
         }
     }
+
+    enum NoFurtherMovesReason { ReachedBottom, GoingInAbyss }
 }
