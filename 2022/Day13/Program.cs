@@ -41,10 +41,10 @@ namespace Day13
             var packets = input.Where(x => !string.IsNullOrWhiteSpace(x)).Select(y => 
                                             JsonConvert.DeserializeObject(y) as JArray);
 
-            var firstDividerPackat = JsonConvert.DeserializeObject("[[2]]") as JArray;
+            var firstDividerPacket = JsonConvert.DeserializeObject("[[2]]") as JArray;
             var secondDividerPacket = JsonConvert.DeserializeObject("[[6]]") as JArray;
 
-            List<JArray> list = new List<JArray> { firstDividerPackat, secondDividerPacket }; 
+            List<JArray> list = new List<JArray> { firstDividerPacket, secondDividerPacket }; 
 
             packets.ToList().ForEach(p =>
             {
@@ -63,7 +63,7 @@ namespace Day13
                 else list.Add(p);
             });
 
-            return (list.IndexOf(firstDividerPackat) + 1) * (list.IndexOf(secondDividerPacket) + 1);
+            return (list.IndexOf(firstDividerPacket) + 1) * (list.IndexOf(secondDividerPacket) + 1);
         }
 
         static int GetRightOrderPairScore(List<string> input)
