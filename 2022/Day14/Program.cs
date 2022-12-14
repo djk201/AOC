@@ -8,8 +8,8 @@ namespace Day14
         {
             Console.WriteLine("Day 14!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -63,34 +63,26 @@ namespace Day14
             {
                 var currentIterationPos = currentPos;
 
-                currentPos = MoveSteps(currentPos, occupuiedPoints, -1, GetNextStepDown, maxBottom, isWallAtBottom, out NoFurtherMovesReason noFurtherMovesReason);
-                if (currentPos == currentIterationPos && noFurtherMovesReason == NoFurtherMovesReason.GoingInAbyss)
-                {
-                    currentPos = startPos;
-                    break;
-                }
-                var positionAfterMove = MoveSteps(currentPos, occupuiedPoints, 1, GetNextStepDiagLeft, maxBottom, isWallAtBottom, out noFurtherMovesReason);
-                if (currentPos != positionAfterMove)
-                {
-                    currentPos = positionAfterMove;
-                    continue;
-                }
-                else if (noFurtherMovesReason == NoFurtherMovesReason.GoingInAbyss)
-                {
-                    currentPos = startPos;
-                    break;
-                }
-                positionAfterMove = MoveSteps(currentPos, occupuiedPoints, 1, GetNextStepDiagRight, maxBottom, isWallAtBottom, out noFurtherMovesReason); ;
+                // All the way Down
+                currentPos = MoveSteps(currentPos, occupuiedPoints, -1, GetNextStepDown, maxBottom, isWallAtBottom, out bool isFlowingToAbyss);
+                if (isFlowingToAbyss) return false;
 
+                // Diagnal Left
+                var positionAfterMove = MoveSteps(currentPos, occupuiedPoints, 1, GetNextStepDiagLeft, maxBottom, isWallAtBottom, out isFlowingToAbyss);
+                if (isFlowingToAbyss) return false;
                 if (currentPos != positionAfterMove)
                 {
                     currentPos = positionAfterMove;
                     continue;
                 }
-                else if (noFurtherMovesReason == NoFurtherMovesReason.GoingInAbyss)
+
+                // DiagnoalRight
+                positionAfterMove = MoveSteps(currentPos, occupuiedPoints, 1, GetNextStepDiagRight, maxBottom, isWallAtBottom, out isFlowingToAbyss); ;
+                if (isFlowingToAbyss) return false;
+                if (currentPos != positionAfterMove)
                 {
-                    currentPos = startPos;
-                    break;
+                    currentPos = positionAfterMove;
+                    continue;
                 }
 
                 if (positionAfterMove == currentIterationPos) break; // no more moves possible
@@ -101,71 +93,32 @@ namespace Day14
             return startPos != currentPos;
         }
 
-        static (int, int) MoveSteps((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, int stepsToMove, Func<(int, int), (int, int)> getNextStep, int maxBottom, bool isWallAtBottom, out NoFurtherMovesReason noFurtherMovesReason)
+        static (int, int) MoveSteps((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, int stepsToMove, Func<(int, int), (int, int)> getNextStep, int maxBottom, bool isWallAtBottom, out bool isFlowingToAbyss)
         {
             var canMove = true;
             var currentPos = startPos;
-            noFurtherMovesReason = NoFurtherMovesReason.ReachedBottom;
+            isFlowingToAbyss = false;
             var stepCount = 1;
 
             while (canMove)
             {
                 (int, int) nextStep = getNextStep(currentPos);
-                if (occupuiedPoints.ContainsKey(nextStep))
-                {
-                    break;
-                }
+                if (occupuiedPoints.ContainsKey(nextStep)) break;
+
                 if (nextStep.Item2 >= maxBottom)
                 {
                     if (!isWallAtBottom)
                     {
-                        noFurtherMovesReason = NoFurtherMovesReason.GoingInAbyss;
+                        isFlowingToAbyss = true;
                         currentPos = startPos;
                     }
                     break;
                 }
                 currentPos = nextStep;
                 stepCount++;
-                if (stepsToMove != -1 && stepsToMove < stepCount)
-                {
-                    canMove = false;
-                }
+                if (stepsToMove != -1 && stepsToMove < stepCount) canMove = false;
             }
             return currentPos;
-        }
-
-        static (int, int) MoveAllTheWay((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, Func<(int, int), (int, int)> getNextStep, int maxBottom, bool isWallAtBottom, out bool goingToAbyss)
-        {
-            var canMove = true;
-            var currentPos = startPos;
-            goingToAbyss = false;
-            while (canMove)
-            {
-                (int, int) nextStep = MoveOneStep(currentPos, occupuiedPoints, getNextStep);
-                if (nextStep == currentPos)
-                {
-                    canMove = false;
-                    break;
-                }
-                if (nextStep.Item2 >= maxBottom)
-                {
-                    canMove = false;
-                    if (!isWallAtBottom)
-                    {
-                        goingToAbyss = true;
-                        currentPos = startPos;
-                    }
-                    break;
-                }
-                currentPos = nextStep;
-            }
-            return currentPos;
-        }
-
-        static (int, int) MoveOneStep((int, int) currentStep, Dictionary<(int, int), bool> occupuiedPoints, Func<(int, int), (int, int)> getNextStep)
-        {
-            (int, int) nextStep = getNextStep(currentStep);
-            return occupuiedPoints.ContainsKey(nextStep) ? currentStep : nextStep;
         }
 
         static (int, int) GetNextStepDown((int, int) currentStep) => new(currentStep.Item1, currentStep.Item2 + 1);
@@ -175,13 +128,7 @@ namespace Day14
         static (int, int)[] CreateCords(string source)
         {
             List<(int, int)> result = new List<(int, int)>();
-
-            var lineGroupsString = source.Split(" -> ").Select(x => x.Split(",")).ToList();
-
-            lineGroupsString.ForEach(x =>
-            {
-                result.Add(new(int.Parse(x[0]), int.Parse(x[1])));
-            });
+            source.Split(" -> ").Select(x => x.Split(",")).ToList().ForEach(y => result.Add(new(int.Parse(y[0]), int.Parse(y[1]))));
             return result.ToArray();
         }
 
@@ -192,8 +139,7 @@ namespace Day14
             linesGroup.ToList().ForEach(g => {
                 for(int i = 1; i < g.Length; i++)
                 {
-                    var allLinePoints = GetAllLinePoints(g[i - 1], g[i]);
-                    allLinePoints.ForEach(x => result[x] = true);
+                    GetAllLinePoints(g[i - 1], g[i]).ForEach(x => result[x] = true);
                 }
             });
             return result;
@@ -215,6 +161,4 @@ namespace Day14
             return result;
         }
     }
-
-    enum NoFurtherMovesReason { ReachedBottom, GoingInAbyss }
 }
