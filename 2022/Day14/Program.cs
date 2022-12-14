@@ -8,8 +8,8 @@ namespace Day14
         {
             Console.WriteLine("Day 14!");
 
-            //string inputFile = @"..\..\..\sample_input.txt";
-            string inputFile = @"..\..\..\final_input.txt";
+            string inputFile = @"..\..\..\sample_input.txt";
+            //string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -20,26 +20,26 @@ namespace Day14
             var timer = new Stopwatch();
             timer.Start();
 
-            var answer1 = GetTotalUnitsOfSandAtRest(input);
+            var linesGroup = input.Select(CreateCords);
+            var occupiedPoints = CreateDictionaryWithLinePoints(linesGroup);
+            var maxBottom = occupiedPoints.Keys.Select(x => x.Item2).Max();
+
+            var answer1 = GetTotalUnitsOfSandAtRest(occupiedPoints, maxBottom);
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
 
             timer.Restart();
-            var answer2 = 0;
+
+            occupiedPoints = CreateDictionaryWithLinePoints(linesGroup);
+            maxBottom = occupiedPoints.Keys.Select(x => x.Item2).Max() + 2;
+
+            var answer2 = GetTotalUnitsOfSandAtRest(occupiedPoints, maxBottom, true);
             var answer2Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
 
-        static int GetTotalUnitsOfSandAtRest(List<string> input)
+        static int GetTotalUnitsOfSandAtRest(Dictionary<(int, int), bool> occupuiedPoints, int maxBottom, bool isWallAtBottom = false)
         {
-            //var lines = input.Select(x => x.Split(" -> ").Select(y => new(int.Parse(y.Split(",")[0]), int.Parse(y.Split(",")[1]))));
-
-            var linesGroup = input.Select(CreateCords);
-
-            // Create Dictionary of points in the lines
-            var occupiedPoints = CreateDictionaryWithLinePoints(linesGroup);
-            var maxBottom = occupiedPoints.Keys.Select(x => x.Item2).Max();
-
             (int, int) sandPourStartPos = new(500, 0);
 
             //Simulate Sand Falling
@@ -48,21 +48,21 @@ namespace Day14
 
             while(!maxLimitReached)
             {
-                maxLimitReached = !SimulateSandFall(sandPourStartPos, occupiedPoints, maxBottom);
+                maxLimitReached = !SimulateSandFall(sandPourStartPos, occupuiedPoints, maxBottom, isWallAtBottom);
                 sandUnitCount++;
             }
 
             return --sandUnitCount;
         }
 
-        static bool SimulateSandFall((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, int maxBottom)
+        static bool SimulateSandFall((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, int maxBottom, bool isWallAtBottom)
         {
             var currentPos = startPos;
 
             while(true)
             {
                 var currentIterationPos = currentPos;
-                currentPos = MoveAllTheWay(currentPos, occupuiedPoints, GetNextStepDown, maxBottom, out bool goingToAbyss);
+                currentPos = MoveAllTheWay(currentPos, occupuiedPoints, GetNextStepDown, maxBottom, isWallAtBottom, out bool goingToAbyss);
                 if (goingToAbyss) 
                 {
                     currentPos = startPos;
@@ -84,7 +84,7 @@ namespace Day14
             return startPos != currentPos;
         }
 
-        static (int, int) MoveAllTheWay((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, Func<(int, int), (int, int)> getNextStep, int maxBottom, out bool goingToAbyss)
+        static (int, int) MoveAllTheWay((int, int) startPos, Dictionary<(int, int), bool> occupuiedPoints, Func<(int, int), (int, int)> getNextStep, int maxBottom, bool isWallAtBottom, out bool goingToAbyss)
         {
             var canMove = true;
             var currentPos = startPos;
@@ -97,10 +97,14 @@ namespace Day14
                     canMove = false;
                     break;
                 }
-                if (currentPos.Item2 >= maxBottom)
+                if (nextStep.Item2 >= maxBottom)
                 {
-                    goingToAbyss = true;
-                    currentPos = startPos;
+                    canMove = false;
+                    if (!isWallAtBottom)
+                    {
+                        goingToAbyss = true;
+                        currentPos = startPos;
+                    }
                     break;
                 }
                 currentPos = nextStep;
