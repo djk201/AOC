@@ -46,17 +46,21 @@ namespace Day15
 
         private static (int, int) GetDistressBeaconPosition(List<Sensor> sensors, int minCord, int maxCord)
         {
-            var posToCheck = sensors.SelectMany(s => GetAdjacentPosForSensor(s, minCord, maxCord)).Distinct();
+            //var posToCheck = sensors.SelectMany(s => GetAdjacentPosForSensor(s, minCord, maxCord)).Distinct();
 
-            foreach (var pos in posToCheck)
+            foreach (var s in sensors)
             {
-                var isPointInRange = false;
-                foreach (Sensor sensor in sensors)
+                var posToCheck = GetAdjacentPosForSensor(s, minCord, maxCord);
+                foreach (var pos in posToCheck)
                 {
-                    isPointInRange = sensor.IsPointInRange(pos);
-                    if (isPointInRange) break;
+                    var isPointInRange = false;
+                    foreach (Sensor sensor in sensors)
+                    {
+                        isPointInRange = sensor.IsPointInRange(pos);
+                        if (isPointInRange) break;
+                    }
+                    if (!isPointInRange) return pos;
                 }
-                if (!isPointInRange) return pos;
             }
             return (0, 0);
         }
@@ -69,10 +73,10 @@ namespace Day15
             {
                 if ((x < min) || (x > max)) continue;
                 var yRange = radius - Math.Abs(s.SensorPos.Item1 - x);
-                if (!(s.SensorPos.Item2 - yRange < min) && !(s.SensorPos.Item2 - yRange > max)) adjacentPos.Add(new(x, s.SensorPos.Item2 - yRange));
+                if (!(s.SensorPos.Item2 - yRange < min) && !(s.SensorPos.Item2 - yRange > max)) adjacentPos.Add((x, s.SensorPos.Item2 - yRange));
 
                 if (x == s.SensorPos.Item1 - radius || x == s.SensorPos.Item1 + radius) continue;
-                if (!(s.SensorPos.Item2 + yRange < min) && !(s.SensorPos.Item2 + yRange > max)) adjacentPos.Add(new(x, s.SensorPos.Item2 + yRange));
+                if (!(s.SensorPos.Item2 + yRange < min) && !(s.SensorPos.Item2 + yRange > max)) adjacentPos.Add((x, s.SensorPos.Item2 + yRange));
             }
             return adjacentPos;
         }
@@ -85,12 +89,10 @@ namespace Day15
             Dictionary<(int, int), bool> emptyLocations = new Dictionary<(int, int), bool>();
             sensors.ForEach(s =>
             {
-                var focal = Math.Abs(y - s.SensorPos.Item2);
-                var range = s.DistanceToBeacon - focal;
-                for (int x = s.SensorPos.Item1 - range; x <= s.SensorPos.Item1 + range; x++)
+                var rangeX = s.DistanceToBeacon - Math.Abs(y - s.SensorPos.Item2);
+                for (int x = s.SensorPos.Item1 - rangeX; x <= s.SensorPos.Item1 + rangeX; x++)
                 {
-                    (int, int) loc = new(x, y);
-                    if (!allBeacons.Contains(loc)) emptyLocations[loc] = true;
+                    if (!allBeacons.Contains((x, y))) emptyLocations[(x, y)] = true;
                 }
             });
 
@@ -107,8 +109,8 @@ namespace Day15
                 var pos = parts.ToList().Select(s => s.Trim().Split("=")).Select(t => int.Parse(t[1])).ToArray();
                 sensors.Add(new Sensor
                 {
-                    SensorPos = new(pos[0], pos[1]),
-                    NearestBeaconPos = new(pos[2], pos[3])
+                    SensorPos = (pos[0], pos[1]),
+                    NearestBeaconPos = (pos[2], pos[3])
                 });
             });
             return sensors;
