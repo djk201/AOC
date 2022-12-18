@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics;
-namespace Day16
+namespace Day20
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Day 16!");
+            Console.WriteLine("Day 20!");
 
             string inputFile = @"..\..\..\sample_input.txt";
             //string inputFile = @"..\..\..\final_input.txt";
@@ -32,12 +32,6 @@ namespace Day16
             var answer2 = 0;
             var answer2Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
-        }
-
-        static long GetMostPressurePossible(List<string> input)
-        {
-            // Create Tree Nodes
-
         }
     }
 }
