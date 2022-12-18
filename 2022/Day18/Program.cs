@@ -10,8 +10,8 @@ namespace Day18
         {
             Console.WriteLine("Day 18!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -46,17 +46,17 @@ namespace Day18
                 bool xz = false;
                 for(int j = 0; j < i; j++)
                 {
-                    if (xy == false && points[i].X == points[j].X && points[i].Y == points[j].Y)
+                    if (points[i].X == points[j].X && points[i].Y == points[j].Y && Math.Abs(points[i].Z - points[j].Z) == 1)
                     {
                         xy = true;
                         surfaceArea -= 2;
                     }
-                    else if (yz == false && points[i].Y == points[j].Y && points[i].Z == points[j].Z)
+                    else if (points[i].Y == points[j].Y && points[i].Z == points[j].Z && Math.Abs(points[i].X - points[j].X) == 1)
                     {
                         yz = true;
                         surfaceArea -= 2;
                     }
-                    else if (xz == false && points[i].X == points[j].X && points[i].Z == points[j].Z)
+                    else if (points[i].X == points[j].X && points[i].Z == points[j].Z && Math.Abs(points[i].Y - points[j].Y) == 1)
                     {
                         xz = true;
                         surfaceArea -= 2;
