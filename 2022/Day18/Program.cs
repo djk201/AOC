@@ -1,6 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Day18
 {
@@ -34,25 +32,25 @@ namespace Day18
 
         static long GetExternalSurfaceArea(List<string> input)
         {
-            var points = input.Select(x => x.Split(",")).Select(y => (int.Parse(y[0]), int.Parse(y[1]), int.Parse(y[2])));
-            var min = new Point(points.Select(p => p.Item1).Min() - 1, points.Select(p => p.Item2).Min() - 1, points.Select(p => p.Item3).Min() - 1);
-            var max = new Point(points.Select(p => p.Item1).Max() + 1, points.Select(p => p.Item2).Max() + 1, points.Select(p => p.Item3).Max() + 1);
+            var points = input.Select(x => x.Split(",")).ToDictionary(y => (int.Parse(y[0]), int.Parse(y[1]), int.Parse(y[2])), y=> true);
+            var min = new Point(points.Select(p => p.Key.Item1).Min() - 1, points.Select(p => p.Key.Item2).Min() - 1, points.Select(p => p.Key.Item3).Min() - 1);
+            var max = new Point(points.Select(p => p.Key.Item1).Max() + 1, points.Select(p => p.Key.Item2).Max() + 1, points.Select(p => p.Key.Item3).Max() + 1);
 
             var queue = new Queue<Point>();
             queue.Enqueue(min);
 
             var result = 0;
-            var visited = new List<(int, int, int)> { min.ToMulti };
+            var visited = new Dictionary<(int, int, int), bool> { { min.ToMulti, true } };
             while(queue.TryDequeue(out var point))
             {
                 foreach(var neighbour in point.AllNeighbours)
                 {
                     if (!neighbour.IsInRange(min, max)) continue;
-                    if (points.Contains(neighbour.ToMulti)) result++;
-                    else if (!visited.Contains(neighbour.ToMulti))
+                    if (points.Keys.Contains(neighbour.ToMulti)) result++;
+                    else if (!visited.Keys.Contains(neighbour.ToMulti))
                     {
                         queue.Enqueue(neighbour);
-                        visited.Add(neighbour.ToMulti);
+                        visited[neighbour.ToMulti] = true;
                     }
                 }
             }
@@ -76,7 +74,6 @@ namespace Day18
             }
             return surfaceArea;
         }
-
         
     }
 
