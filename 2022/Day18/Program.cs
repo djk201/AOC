@@ -41,26 +41,9 @@ namespace Day18
             for (int i = 1; i < points.Length; i++)
             {
                 surfaceArea += 6;
-                bool xy = false;
-                bool yz = false;
-                bool xz = false;
                 for(int j = 0; j < i; j++)
                 {
-                    if (points[i].X == points[j].X && points[i].Y == points[j].Y && Math.Abs(points[i].Z - points[j].Z) == 1)
-                    {
-                        xy = true;
-                        surfaceArea -= 2;
-                    }
-                    else if (points[i].Y == points[j].Y && points[i].Z == points[j].Z && Math.Abs(points[i].X - points[j].X) == 1)
-                    {
-                        yz = true;
-                        surfaceArea -= 2;
-                    }
-                    else if (points[i].X == points[j].X && points[i].Z == points[j].Z && Math.Abs(points[i].Y - points[j].Y) == 1)
-                    {
-                        xz = true;
-                        surfaceArea -= 2;
-                    }
+                    if (points[i].IsAdjacentToPoint(points[j])) surfaceArea -= 2;
                 }
             }
             return surfaceArea;
@@ -75,6 +58,9 @@ namespace Day18
         public int Y { get; set; }
         public int Z { get; set; }
 
-        public bool IsAdjacentToPoint(Point p) => (p.X == X && p.Y == Y) || (p.Y == Y && p.Z == Z) || (p.X == X && p.Z == Z);
+        public bool IsAdjacentToPoint(Point p) => 
+            (p.X == X && p.Y == Y && Math.Abs(p.Z - Z) == 1) || 
+            (p.Y == Y && p.Z == Z && Math.Abs(p.X - X) == 1) || 
+            (p.X == X && p.Z == Z && Math.Abs(p.Y - Y) == 1);
     }
 }
