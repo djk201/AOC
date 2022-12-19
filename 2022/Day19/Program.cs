@@ -83,16 +83,6 @@ namespace Day19
                 return maxGeodes;
             }
 
-            int minsLeft = MaxMins - mins;
-            int maxGeodesPossible = g;
-            for (int i = 0; i < minsLeft; i++)
-                maxGeodesPossible += g + i;
-            if (maxGeodesPossible < maxGeodes)
-            {
-                Console.WriteLine("maxGeodesPossible breached");
-                return 0;
-            }
-
             int no = o + or;
             int nc = c + cr;
             int nob = ob + obr;
@@ -111,22 +101,18 @@ namespace Day19
 
             int max = 0;
 
-            //if not too many obsidian bots and enough to make one, make one
             if (obr < b.GRCostOb && o >= b.ObRCostO && c >= b.ObRCostC)
             {
                 max = Math.Max(max, CalculateMaxGeodes(b, or, cr, obr + 1, gr, no - b.ObRCostO, nc - b.ObRCostC, nob, ng, mins + 1, maxGeodes));
             }
-            //if not too many clay bots and enough to make one, make one
             if (cr < b.ObRCostC && o >= b.CRCostO)
             {
                 max = Math.Max(max, CalculateMaxGeodes(b, or, cr + 1, obr, gr, no - b.CRCostO, nc, nob, ng, mins + 1, maxGeodes));
             }
-            //if not too many ore bots and enough to make one, make one
             if (or < 4 && o >= b.ORCostO)
             {
                 max = Math.Max(max, CalculateMaxGeodes(b, or + 1, cr, obr, gr, no - b.ORCostO, nc, nob, ng, mins + 1, maxGeodes));
             }
-            //if not holding on to more ore than maximum bot cost, wait and see if we can make a better bot later
             if (o <= 4)
             {
                 max = Math.Max(max, CalculateMaxGeodes(b, or, cr, obr, gr, no, nc, nob, ng, mins + 1, maxGeodes));
