@@ -66,64 +66,66 @@ namespace Day19
 
         private static int GetMaxGeodesForBlueprint(Blueprint blueprint)
         {
-            var r = new Resources { OR = 1 };
-
-            var result = CalculateMaxGeodes(blueprint, r, 0, 0);
+            var result = CalculateMaxGeodes(blueprint, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
             return result;
         }
 
-        static int CalculateMaxGeodes(Blueprint b, Resources r, int mins, int maxGeodes)
+        static int CalculateMaxGeodes(Blueprint b, int or, int cr, int obr, int gr, int o, int c, int ob, int g, int mins, int maxGeodes)
         {
             if (mins == MaxMins)
             {
-                maxGeodes = Math.Max(maxGeodes, r.G);
+                maxGeodes = Math.Max(maxGeodes, g);
                 return maxGeodes;
             }
 
             int minsLeft = MaxMins - mins;
-            int maxGeodesPossible = r.G;
+            int maxGeodesPossible = g;
             for (int i = 0; i < minsLeft; i++)
-                maxGeodesPossible += r.GR + i;
+                maxGeodesPossible += g + i;
             if (maxGeodesPossible < maxGeodes)
             {
                 Console.WriteLine("maxGeodesPossible breached");
                 return 0;
             }
 
-            var nr = r.GenerateResources;
+            int no = o + or;
+            int nc = c + cr;
+            int nob = ob + obr;
+            int ng = g + gr;
 
-            if (r.O >= b.GRCostO && r.Ob >= b.GRCostOb)
+
+            if (o >= b.GRCostO && ob >= b.GRCostOb)
             {
-                return CalculateMaxGeodes(b, nr.CreateGR(b), mins + 1, maxGeodes);
+                return CalculateMaxGeodes(b, or, cr, obr, gr + 1, no - b.GRCostO, nc, nob - b.GRCostOb, ng, mins + 1, maxGeodes);
             }
 
-            if (r.CR >= b.ObRCostC && r.ObR < b.GRCostOb && r.O >= b.ObRCostO && r.C >= b.ObRCostC)
+            if (cr >= b.ObRCostC && obr < b.GRCostOb && o >= b.ObRCostO && c >= b.ObRCostC)
             {
-                return CalculateMaxGeodes(b, nr.CreateObR(b), mins + 1, maxGeodes);
+                return CalculateMaxGeodes(b, or, cr, obr + 1, gr, no - b.ObRCostO, nc - b.ObRCostC, nob, ng, mins + 1, maxGeodes);
             }
 
             int max = 0;
 
             //if not too many obsidian bots and enough to make one, make one
-            if (r.ObR < b.GRCostOb && r.O >= b.ObRCostO && r.C >= b.ObRCostC)
+            if (obr < b.GRCostOb && o >= b.ObRCostO && c >= b.ObRCostC)
             {
-                max = Math.Max(max, CalculateMaxGeodes(b, nr.CreateObR(b), mins + 1, maxGeodes));
+                max = Math.Max(max, CalculateMaxGeodes(b, or, cr, obr + 1, gr, no - b.ObRCostO, nc - b.ObRCostC, nob, ng, mins + 1, maxGeodes));
             }
             //if not too many clay bots and enough to make one, make one
-            if (r.CR < b.ObRCostC && r.O >= b.CRCostO)
+            if (cr < b.ObRCostC && o >= b.CRCostO)
             {
-                max = Math.Max(max, CalculateMaxGeodes(b, nr.CreateCR(b), mins + 1, maxGeodes));
+                max = Math.Max(max, CalculateMaxGeodes(b, or, cr + 1, obr, gr, no - b.CRCostO, nc, nob, ng, mins + 1, maxGeodes));
             }
             //if not too many ore bots and enough to make one, make one
-            if (r.OR < 4 && r.O >= b.ORCostO)
+            if (or < 4 && o >= b.ORCostO)
             {
-                max = Math.Max(max, CalculateMaxGeodes(b, nr.CreateOR(b), mins + 1, maxGeodes));
+                max = Math.Max(max, CalculateMaxGeodes(b, or + 1, cr, obr, gr, no - b.ORCostO, nc, nob, ng, mins + 1, maxGeodes));
             }
             //if not holding on to more ore than maximum bot cost, wait and see if we can make a better bot later
-            if (r.O <= 4)
+            if (o <= 4)
             {
-                max = Math.Max(max, CalculateMaxGeodes(b, nr, mins + 1, maxGeodes));
+                max = Math.Max(max, CalculateMaxGeodes(b, or, cr, obr, gr, no, nc, nob, ng, mins + 1, maxGeodes));
             }
 
             return max;
