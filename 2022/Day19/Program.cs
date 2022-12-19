@@ -43,6 +43,10 @@ namespace Day19
                 int maxGeodes = GetMaxGeodesForBlueprint(blueprint);
 
                 result = result * maxGeodes;
+
+                Console.WriteLine($"{blueprintId} Blueprints completed");
+
+                if (blueprintId == 3) break;
             }
             return result;
         }
@@ -151,58 +155,6 @@ namespace Day19
 
             return blueprints;
         }
-
-        class Resources
-        {
-            public int OR { get; set; }
-            public int CR { get; set; }
-            public int ObR { get; set; }
-            public int GR { get; set; }
-            public int O { get; set; }
-            public int C { get; set; }
-            public int Ob { get; set; }
-            public int G { get; set; }
-
-            public Resources() { }
-            public Resources(int or, int cr, int obr, int gr, int o, int c, int ob, int g)
-            {
-                OR = or; CR = cr; ObR = obr; GR = gr; O = o; C = c; Ob = ob; G = g; 
-            }
-
-            public Resources GenerateResources => new Resources(OR, CR, ObR, GR, O+OR, C+CR, Ob+ObR, G+GR);
-            public Resources Copy => new Resources(OR, CR, ObR, GR, O, C, Ob, G);
-            public Resources CreateGR(Blueprint b)
-            {
-                var nr = Copy;
-                nr.O -= b.GRCostO;
-                nr.Ob -= b.GRCostOb;
-                nr.GR += 1;
-                return nr;
-            }
-            public Resources CreateObR(Blueprint b)
-            {
-                var nr = Copy;
-                nr.O -= b.ObRCostO;
-                nr.C -= b.ObRCostC;
-                nr.ObR += 1;
-                return nr;
-            }
-            public Resources CreateCR(Blueprint b)
-            {
-                var nr = Copy;
-                nr.O -= b.CRCostO;
-                nr.CR += 1;
-                return nr;
-            }
-            public Resources CreateOR(Blueprint b)
-            {
-                var nr = Copy;
-                nr.O -= b.ORCostO;
-                nr.OR += 1;
-                return nr;
-            }
-        }
-
 
         class Blueprint
         {
