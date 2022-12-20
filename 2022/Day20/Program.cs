@@ -52,14 +52,14 @@ namespace Day20
                 current.Left = previous;
                 previous = current;
             };
-            current.Right = first;
+
+            // connect the last one to first to make it circular
+            current.Right = first; 
             first.Left = current;
+
             TotalNodes = input.Count;
 
-            for(int i = 0; i < rounds; i++)
-            {
-                all.ForEach(Mix);
-            }
+            for(int i = 0; i < rounds; i++) all.ForEach(Mix);
 
             var k1 = GetNthNode(zeroNode, 1000);
             var k2 = GetNthNode(k1, 1000);
@@ -73,50 +73,28 @@ namespace Day20
             if (sign == 0) return;
 
             var valueAbs = Math.Abs(node.Value);
-
             var n = valueAbs > TotalNodes - 1 ? valueAbs % (TotalNodes - 1) : valueAbs;
-
-            Node target = node;
-            for (int i = 0; i < n; i++)
-            {
-                target = (sign == -1) ? target.Left : target.Right;
-            }
+            if (sign == -1) n = TotalNodes - 1 - n;
+            Node target = GetNthNode(node, n);
 
             // Remove the node we want to move
             var left = node.Left;
             var right = node.Right;
-
             left.Right = right;
             right.Left = left;
 
-            if (sign == -1)
-            {
-                left = target.Left;
-                left.Right = node;
-                target.Left = node;
-                node.Left = left;
-                node.Right = target;
-            }
-            else // sign is 1
-            {
-                right = target.Right;
-                right.Left = node;
-                target.Right = node;
-                node.Left = target;
-                node.Right = right;
-            }
+            // Insert the Node to the right
+            right = target.Right;
+            right.Left = node;
+            target.Right = node;
+            node.Left = target;
+            node.Right = right;
         }
 
-        static Node GetNthNode(Node from, int n)
+        static Node GetNthNode(Node current, long n)
         {
             n = n > TotalNodes ? n % TotalNodes : n;
-
-            Node current = from;
-            for (int i = 0; i < n; i++)
-            {
-                current = current.Right;
-            }
-
+            for (int i = 0; i < n; i++) current = current.Right;
             return current;
         }
     }
