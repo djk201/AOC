@@ -22,24 +22,24 @@ namespace Day20
             var timer = new Stopwatch();
             timer.Start();
 
-            var answer1 = PartOne(input);
+            var answer1 = GetGrooveCoordinates(input);
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
 
             timer.Restart();
-            var answer2 = 0;
+            var answer2 = GetGrooveCoordinates(input, 10, 811589153);
             var answer2Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
 
-        static int PartOne(List<string> input)
+        static long GetGrooveCoordinates(List<string> input, int rounds = 1, long multiplier = 1)
         {
             Node first = null, previous = null, current = null, zeroNode = null;
             var all = new List<Node>();
 
             foreach (var l in input)
             {
-                current = new Node { Value = int.Parse(l) };
+                current = new Node { Value = long.Parse(l) * multiplier };
                 all.Add(current);
                 if (current.Value == 0) zeroNode = current;
                 if (first == null)
@@ -55,7 +55,11 @@ namespace Day20
             current.Right = first;
             first.Left = current;
             TotalNodes = input.Count;
-            all.ForEach(Mix);
+
+            for(int i = 0; i < rounds; i++)
+            {
+                all.ForEach(Mix);
+            }
 
             var k1 = GetNthNode(zeroNode, 1000);
             var k2 = GetNthNode(k1, 1000);
@@ -119,7 +123,7 @@ namespace Day20
 
     class Node
     {
-        public int Value { get; set; }
+        public long Value { get; set; }
         public Node? Left { get; set; }
         public Node? Right { get; set; }
     }
