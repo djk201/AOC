@@ -34,6 +34,15 @@ namespace Shared
             return result;
         }
 
+        public static List<string> SplitByNewline(this string input, bool blankLines = false, bool shouldTrim = true)
+        {
+            return input
+               .Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
+               .Where(s => blankLines || !string.IsNullOrWhiteSpace(s))
+               .Select(s => shouldTrim ? s.Trim() : s)
+               .ToList();
+        }
+
         public static List<int> ToListOfTypeInt(this string[] source)
         {
             var result = Array.ConvertAll<string, int>(source, new Converter<string, int>(Convert.ToInt32)).ToList();
@@ -44,5 +53,29 @@ namespace Shared
         {
             return source.Select(x => x.Sum()).ToList();
         }
+
+        public static int[,] TrimArray(this int[,] originalArray, int rowToRemove, int columnToRemove)
+        {
+            int[,] result = new int[originalArray.GetLength(0) - 1, originalArray.GetLength(1) - 1];
+
+            for (int i = 0, j = 0; i < originalArray.GetLength(0); i++)
+            {
+                if (i == rowToRemove)
+                    continue;
+
+                for (int k = 0, u = 0; k < originalArray.GetLength(1); k++)
+                {
+                    if (k == columnToRemove)
+                        continue;
+
+                    result[j, u] = originalArray[i, k];
+                    u++;
+                }
+                j++;
+            }
+
+            return result;
+        }
+
     }
 }
