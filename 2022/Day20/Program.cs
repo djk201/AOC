@@ -10,8 +10,8 @@ namespace Day20
         {
             Console.WriteLine("Day 20!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -68,7 +68,9 @@ namespace Day20
             int sign = Math.Sign(node.Value);
             if (sign == 0) return;
 
-            var n = Math.Abs(node.Value) > TotalNodes ? Math.Abs(node.Value) % TotalNodes : Math.Abs(node.Value);
+            var valueAbs = Math.Abs(node.Value);
+
+            var n = valueAbs > TotalNodes - 1 ? valueAbs % (TotalNodes - 1) : valueAbs;
 
             Node target = node;
             for (int i = 0; i < n; i++)
