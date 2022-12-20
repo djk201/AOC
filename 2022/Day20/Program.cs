@@ -22,11 +22,6 @@ namespace Day20
             var timer = new Stopwatch();
             timer.Start();
 
-            input.ForEach(x =>
-            {
-
-            });
-
             var answer1 = PartOne(input);
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
@@ -87,9 +82,6 @@ namespace Day20
 
             left.Right = right;
             right.Left = left;
-
-            // Insert it after or before target based on direction
-            //right = target.Right;
 
             if (sign == -1)
             {
