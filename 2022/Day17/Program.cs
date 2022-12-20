@@ -57,8 +57,28 @@ namespace Day17
                 }
                 rock.ToList().ForEach(p => tower[p] = true);
                 towerHeight = tower.Keys.Select(x => x.Item2).Max() + 1;
+
+                if (jetIndex % 1000 == 0)
+                {
+                    Console.WriteLine($"JetIndex = {jetIndex}");
+                }
+
+                if (jetIndex == 0)
+                {
+                    Console.WriteLine($"Number of Rocks fell = {i}; Are All points occupied = {AreAllPointsOccupiedOnTOpOfTower(tower, towerHeight)}");
+                }
             }
             return towerHeight;
+        }
+
+        static bool AreAllPointsOccupiedOnTOpOfTower(Dictionary<(long, long), bool> tower, long height)
+        {
+            for(int i = 0; i < 6; i++)
+            {
+                if (!tower.ContainsKey((i, height)))
+                    return false;
+            }
+            return true;
         }
 
         private static (long, long)[] Move(Dictionary<(long, long), bool> tower, (long, long)[] rock, int direction, out bool isStopped)
