@@ -46,7 +46,7 @@ namespace Day16
         }
 
 
-        static long CalculateMaxPressureP2(string current, long mins, long flowRate, long pressure, long maxPressure)
+        static long CalculateMaxPressureP2(List<Actor> actors, long mins, long flowRate, long pressure, long maxPressure)
         {
             if (mins > MaxMins)
             {
@@ -65,26 +65,55 @@ namespace Day16
             if (ValvesState.Values.All(x => x.Item2)) // All Valves are already open
             {
                 var remainingMins = MaxMins - mins;
-                return CalculateMaxPressureP2(current, mins + remainingMins, flowRate, newPressure + (flowRate * (remainingMins - 1)), maxPressure);
+                return CalculateMaxPressureP2(actors, mins + remainingMins, flowRate, newPressure + (flowRate * (remainingMins - 1)), maxPressure);
             }
 
             // Lets open current valve and calculate new flowRate
-            if (current != "AA" && !ValvesState[current].Item2)
+
+            var newFlowRate = flowRate;
+            var freeActors = new List<Actor>();
+            foreach (var actor in actors)
             {
-                var currentValve = ValvesState[current].Item1;
-                ValvesState[current] = (currentValve, true);
-                //Console.WriteLine($"Valve {current.Name} OPENED");
-                return CalculateMaxPressureP2(current, mins + 1, flowRate + currentValve.FlowRate, newPressure, maxPressure);
+                if (actor.MinsToReach > 0)
+                {
+                    actor.MinsToReach--;
+                    continue;
+                }
+                if (actor.Valve != "AA" && !ValvesState[actor.Valve].Item2)
+                {
+                    var currentValve = ValvesState[actor.Valve].Item1;
+                    ValvesState[actor.Valve] = (currentValve, true);
+                    newFlowRate += currentValve.FlowRate;
+                    continue;
+                }
+                freeActors.Add(actor);
             }
+            return CalculateMaxPressureP2(actors, mins + 1, flowRate + newFlowRate, newPressure, maxPressure);
+
 
             //var currentValve = ValvesState[current].Item1;
 
             long max = 0;
+            var valvesSelected = new List<string>();
+            foreach(var actor in freeActors)
+            {
+                foreach (var valve in ValvesState.Where(x => !x.Value.Item2 && !valvesSelected.Contains(x.Key)))
+                {
+                    //var minsToReach = valve.Value.Item1.ValvesToOpen[valve.Key];
+                    var minsToReach = ValveDistance[(actor, valve.Key)];
+                    //Console.WriteLine($"Going from Valve {current.Name} to {valve.Key}");
+                    max = Math.Max(max, CalculateMaxPressure(valve.Value.Item1, mins + minsToReach, flowRate, newPressure + (flowRate * (minsToReach - 1)), maxPressure));
+
+                    // Close the valve so other paths can use it
+                    ValvesState[valve.Key] = (valve.Value.Item1, false);
+                    //Console.WriteLine($"Valve {valve.Key} CLOSED");
+                }
+            }
 
             foreach (var valve in ValvesState.Where(x => !x.Value.Item2))
             {
                 //var minsToReach = valve.Value.Item1.ValvesToOpen[valve.Key];
-                var minsToReach = ValveDistance[(current, valve.Key)];
+                var minsToReach = ValveDistance[(actor, valve.Key)];
                 //Console.WriteLine($"Going from Valve {current.Name} to {valve.Key}");
                 max = Math.Max(max, CalculateMaxPressure(valve.Value.Item1, mins + minsToReach, flowRate, newPressure + (flowRate * (minsToReach - 1)), maxPressure));
 
@@ -217,6 +246,12 @@ namespace Day16
             public long FlowRate { get; set; }
             public List<string> LeadsTo { get; set; }
             //public Dictionary<string, long> ValvesToOpen { get; set; }
+        }
+
+        class Actor
+        {
+            public string Valve { get; set; }
+            public int MinsToReach { get; set; }
         }
     }
 }
