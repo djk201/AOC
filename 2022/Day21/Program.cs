@@ -30,11 +30,74 @@ namespace Day21
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
 
+        // Part 2
+        static long WhatNumberToYell(List<string> input, string you)
+        {
+            MonkeyNumbers = InitializeMonkeys(input);
+            return ResolveNumberForMonkey(MonkeyNumbers["root"].Item1);
+        }
+
+        static long FindCorrectNumber(Monkey root, string you)
+        {
+            long rootNumber = -1;
+            if (!DependsOn(MonkeyNumbers[root.Monkey1].Item1, you))
+            {
+                rootNumber = ResolveNumberForMonkey(MonkeyNumbers[root.Monkey1].Item1);
+            }
+            else
+            {
+                rootNumber = ResolveNumberForMonkey(MonkeyNumbers[root.Monkey2].Item1);
+            }
+        }
+
+        static long Resolve(Monkey current, long parentNumber, string target)
+        {
+            long partNumber = -1;
+            if (!DependsOn(MonkeyNumbers[current.Monkey1].Item1, target))
+            {
+                partNumber = ResolveNumberForMonkey(MonkeyNumbers[current.Monkey1].Item1);
+            }
+            else
+            {
+                partNumber = ResolveNumberForMonkey(MonkeyNumbers[current.Monkey2].Item1);
+            }
+
+        }
+
+        // Part 1
         static long GetRootNumber(List<string> input)
         {
             MonkeyNumbers = InitializeMonkeys(input);
             return ResolveNumberForMonkey(MonkeyNumbers["root"].Item1);
         }
+
+        static bool DependsOn(Monkey monkey, string other)
+        {
+            bool isDependent = false;
+
+            if (monkey.DependsOnOthers && (monkey.Monkey1 == other || monkey.Monkey2 == other)
+            {
+                return true;
+            }
+
+            return DependsOn(MonkeyNumbers[monkey.Monkey1].Item1, other) || DependsOn(MonkeyNumbers[monkey.Monkey2].Item1, other);
+        }
+
+        static long ResolveNumberForMonkey(Monkey monkey)
+        {
+            if (!monkey.DependsOnOthers) return monkey.Number;
+
+            var m1 = MonkeyNumbers[monkey.Monkey1];
+            var m2 = MonkeyNumbers[monkey.Monkey2];
+
+            if (!m1.Item2) ResolveNumberForMonkey(m1.Item1);
+            if (!m2.Item2) ResolveNumberForMonkey(m2.Item1);
+
+            MonkeyNumbers[monkey.Name] = (monkey, true);
+            monkey.Number = monkey.Operation(m1.Item1.Number, m2.Item1.Number);
+
+            return monkey.Number;
+       }
 
         private static Dictionary<string, (Monkey, bool)> InitializeMonkeys(List<string> input)
         {
@@ -81,21 +144,6 @@ namespace Day21
             return monkeys;
         }
 
-        static long ResolveNumberForMonkey(Monkey monkey)
-        {
-            if (!monkey.DependsOnOthers) return monkey.Number;
-
-            var m1 = MonkeyNumbers[monkey.Monkey1];
-            var m2 = MonkeyNumbers[monkey.Monkey2];
-
-            if (!m1.Item2) ResolveNumberForMonkey(m1.Item1);
-            if (!m2.Item2) ResolveNumberForMonkey(m2.Item1);
-
-            MonkeyNumbers[monkey.Name] = (monkey, true);
-            monkey.Number = monkey.Operation(m1.Item1.Number, m2.Item1.Number);
-
-            return monkey.Number;
-       }
         static long Add(long num1, long num2) => num1 + num2;
         static long Subtract(long num1, long num2) => num1 - num2;
         static long Multiply(long num1, long num2) => num1 * num2;
