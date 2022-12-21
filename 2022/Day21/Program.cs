@@ -37,7 +37,7 @@ namespace Day21
             return GetYourNumber(MonkeyNumbers["root"].Item1, you, 0);
         }
 
-        static long GetYourNumber(Monkey m, string you, long balance)
+        static long GetYourNumber(Monkey m, string you, long dependentNumber)
         {
             var m1 = MonkeyNumbers[m.Monkey1].Item1;
             var m2 = MonkeyNumbers[m.Monkey2].Item1;
@@ -45,8 +45,7 @@ namespace Day21
             long resolvedNumber;
             Monkey dependentMonkey;
             bool foundYou = false;
-            Monkey monkeyToResolve = null;
-
+            Monkey monkeyToResolve;
             if (m1.Name == you)
             {
                 foundYou = true;
@@ -72,41 +71,40 @@ namespace Day21
 
             resolvedNumber = monkeyToResolve.DependsOnOthers ? ResolveNumberForMonkey(monkeyToResolve) : monkeyToResolve.Number;
 
-            balance = balance == 0 ? resolvedNumber : CalculateBalance(m, monkeyToResolve.Name, resolvedNumber, balance);
+            dependentNumber = dependentNumber == 0 ? resolvedNumber : CalculateOther(m, monkeyToResolve.Name, resolvedNumber, dependentNumber);
 
             if (foundYou)
             {
-                return balance;
+                return dependentNumber;
             }
 
-            return GetYourNumber(dependentMonkey, you, balance);
+            return GetYourNumber(dependentMonkey, you, dependentNumber);
         }
 
-        private static long CalculateBalance(Monkey m, string resolvedMonkey, long resolvedNumber, long forceNumber)
+        private static long CalculateOther(Monkey m, string resolvedMonkey, long resolvedNumber, long operationResult)
         {
             bool m1Resolved = m.Monkey1 == resolvedMonkey;
-            long balanceNumber = 0;
-
             Func<long, long, long>? reverseOperation;
 
-            switch(m.OperationType)
+            long otherNumber;
+            switch (m.OperationType)
             {
                 case OperationType.Add:
-                    balanceNumber = forceNumber - resolvedNumber;
+                    otherNumber = operationResult - resolvedNumber;
                     break;
                 case OperationType.Subtract:
-                    balanceNumber = m1Resolved ? resolvedNumber - forceNumber : resolvedNumber + forceNumber;
+                    otherNumber = m1Resolved ? resolvedNumber - operationResult : resolvedNumber + operationResult;
                     break;
                 case OperationType.Multiply:
-                    balanceNumber = forceNumber / resolvedNumber;
+                    otherNumber = operationResult / resolvedNumber;
                     break;
                 case OperationType.Divide:
                 default:
-                    balanceNumber = m1Resolved ? forceNumber / resolvedNumber : forceNumber * resolvedNumber;
+                    otherNumber = m1Resolved ? operationResult / resolvedNumber : operationResult * resolvedNumber;
                     break;
             }
 
-            return balanceNumber;
+            return otherNumber;
         }
 
         // Part 1

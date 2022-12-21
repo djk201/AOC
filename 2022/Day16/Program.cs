@@ -11,8 +11,8 @@ namespace Day16
         {
             Console.WriteLine("Day 16!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -38,6 +38,7 @@ namespace Day16
         {
             AllValves = InitializeValves(input);
             ValveDistance = CalculateDistances(AllValves.Where(x => x.FlowRate > 0 || x.Name == "AA").ToList(), AllValves.Where(x => x.FlowRate > 0).ToList());
+            ValvesState = AllValves.Where(x => x.FlowRate > 0).ToDictionary(v => v.Name, v => (v, false));
             //ValvesToOpenList = valves.Where(v => v.FlowRate > 0).ToList();
             MaxMins = maxMins;
             var start = AllValves.First(v => v.Name == "AA");
@@ -48,25 +49,31 @@ namespace Day16
 
         static long CalculateMaxPressure(Valve current, long mins, long flowRate, long pressure, long maxPressure)
         {
+            if (mins > MaxMins)
+            {
+                return 0;
+            }
             if (mins == MaxMins)
             {
                 maxPressure = Math.Max(maxPressure, pressure);
+                //Console.WriteLine($"MaxPressure = {maxPressure}");
                 return maxPressure;
             }
 
             var openedValves = ValvesState.Values.Where(x => x.Item2);
             var newPressure = pressure + openedValves.Sum(x => x.Item1.FlowRate);
 
-            if (ValvesState.Values.Any(x => !x.Item2)) // All Valves are already open
+            if (ValvesState.Values.All(x => x.Item2)) // All Valves are already open
             {
                 var remainingMins = MaxMins - mins;
                 return CalculateMaxPressure(current, mins + remainingMins, flowRate, newPressure + (flowRate * (remainingMins-1)), maxPressure);
             }
 
             // Lets open current valve and calculate new flowRate
-            if (!ValvesState[current.Name].Item2)
+            if (current.FlowRate > 0 && !ValvesState[current.Name].Item2)
             {
                 ValvesState[current.Name] = (current, true);
+                //Console.WriteLine($"Valve {current.Name} OPENED");
                 return CalculateMaxPressure(current, mins + 1, flowRate + current.FlowRate, newPressure, maxPressure);
             }
 
@@ -76,10 +83,12 @@ namespace Day16
             {
                 //var minsToReach = valve.Value.Item1.ValvesToOpen[valve.Key];
                 var minsToReach = ValveDistance[(current.Name, valve.Key)];
+                //Console.WriteLine($"Going from Valve {current.Name} to {valve.Key}");
                 max = Math.Max(max, CalculateMaxPressure(valve.Value.Item1, mins + minsToReach, flowRate, newPressure + (flowRate * (minsToReach - 1)), maxPressure));
 
                 // Close the valve so other paths can use it
                 ValvesState[valve.Key] = (valve.Value.Item1, false);
+                //Console.WriteLine($"Valve {valve.Key} CLOSED");
             }
             return max;
         }
@@ -134,7 +143,7 @@ namespace Day16
                 {
                     Name = parts[0].Split(" ")[1],
                     FlowRate = long.Parse(parts[0].Split(" ")[4].Split("=")[1]),
-                    LeadsTo = parts[1].Replace(" tunnels lead to valves ", string.Empty).Replace(" tunnel lead to valve ", string.Empty).Split(", ").ToList()
+                    LeadsTo = parts[1].Replace(" tunnels lead to valves ", string.Empty).Replace(" tunnel leads to valve ", string.Empty).Split(", ").ToList()
                 });
             });
             return valves;
