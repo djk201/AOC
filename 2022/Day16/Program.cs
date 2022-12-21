@@ -7,12 +7,13 @@ namespace Day16
         static Dictionary<string, (Valve, bool)> ValvesState = new Dictionary<string, (Valve, bool)>();
         static Dictionary<(string, string), long> ValveDistance = new Dictionary<(string, string), long>();
         static int MaxMins = 0;
+        static int Actors = 1;
         static void Main(string[] args)
         {
             Console.WriteLine("Day 16!");
 
-            //string inputFile = @"..\..\..\sample_input.txt";
-            string inputFile = @"..\..\..\final_input.txt";
+            string inputFile = @"..\..\..\sample_input.txt";
+            //string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -23,19 +24,80 @@ namespace Day16
         {
             var timer = new Stopwatch();
             timer.Start();
-
-            var answer1 = GetMostPressurePossible(input, 30);
+            var answer1 = GetMostPressurePossible(input, 30, 1);
             var answer1Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer1 = {answer1}; Time Taken = {answer1Time} ms");
 
             timer.Restart();
-            var answer2 = 0;
+            var answer2 = GetMostPressurePossibleP2(input, 30, 2);
             var answer2Time = timer.ElapsedMilliseconds;
             Console.WriteLine($"Answer2 = {answer2}; Time Taken = {answer2Time} ms");
         }
-
-        static long GetMostPressurePossible(List<string> input, int maxMins)
+        static long GetMostPressurePossibleP2(List<string> input, int maxMins, int numOfActors)
         {
+            AllValves = InitializeValves(input);
+            ValveDistance = CalculateDistances(AllValves.Where(x => x.FlowRate > 0 || x.Name == "AA").ToList(), AllValves.Where(x => x.FlowRate > 0).ToList());
+            ValvesState = AllValves.Where(x => x.FlowRate > 0).ToDictionary(v => v.Name, v => (v, false));
+            MaxMins = maxMins;
+
+            var actors = new int[numOfActors];
+            var result = CalculateMaxPressureP2("AA", 0, 0, 0, 0);
+            return result;
+        }
+
+
+        static long CalculateMaxPressureP2(string current, long mins, long flowRate, long pressure, long maxPressure)
+        {
+            if (mins > MaxMins)
+            {
+                return 0;
+            }
+            if (mins == MaxMins)
+            {
+                maxPressure = Math.Max(maxPressure, pressure);
+                //Console.WriteLine($"MaxPressure = {maxPressure}");
+                return maxPressure;
+            }
+
+            var openedValves = ValvesState.Values.Where(x => x.Item2);
+            var newPressure = pressure + openedValves.Sum(x => x.Item1.FlowRate);
+
+            if (ValvesState.Values.All(x => x.Item2)) // All Valves are already open
+            {
+                var remainingMins = MaxMins - mins;
+                return CalculateMaxPressureP2(current, mins + remainingMins, flowRate, newPressure + (flowRate * (remainingMins - 1)), maxPressure);
+            }
+
+            // Lets open current valve and calculate new flowRate
+            if (current != "AA" && !ValvesState[current].Item2)
+            {
+                var currentValve = ValvesState[current].Item1;
+                ValvesState[current] = (currentValve, true);
+                //Console.WriteLine($"Valve {current.Name} OPENED");
+                return CalculateMaxPressureP2(current, mins + 1, flowRate + currentValve.FlowRate, newPressure, maxPressure);
+            }
+
+            //var currentValve = ValvesState[current].Item1;
+
+            long max = 0;
+
+            foreach (var valve in ValvesState.Where(x => !x.Value.Item2))
+            {
+                //var minsToReach = valve.Value.Item1.ValvesToOpen[valve.Key];
+                var minsToReach = ValveDistance[(current, valve.Key)];
+                //Console.WriteLine($"Going from Valve {current.Name} to {valve.Key}");
+                max = Math.Max(max, CalculateMaxPressure(valve.Value.Item1, mins + minsToReach, flowRate, newPressure + (flowRate * (minsToReach - 1)), maxPressure));
+
+                // Close the valve so other paths can use it
+                ValvesState[valve.Key] = (valve.Value.Item1, false);
+                //Console.WriteLine($"Valve {valve.Key} CLOSED");
+            }
+            return max;
+        }
+
+        static long GetMostPressurePossible(List<string> input, int maxMins, int actors)
+        {
+            Actors = actors;
             AllValves = InitializeValves(input);
             ValveDistance = CalculateDistances(AllValves.Where(x => x.FlowRate > 0 || x.Name == "AA").ToList(), AllValves.Where(x => x.FlowRate > 0).ToList());
             ValvesState = AllValves.Where(x => x.FlowRate > 0).ToDictionary(v => v.Name, v => (v, false));
