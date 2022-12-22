@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Shared;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
@@ -10,8 +11,8 @@ namespace Day22
         {
             Console.WriteLine("Day 22!");
 
-            string inputFile = @"..\..\..\sample_input.txt";
-            //string inputFile = @"..\..\..\final_input.txt";
+            //string inputFile = @"..\..\..\sample_input.txt";
+            string inputFile = @"..\..\..\final_input.txt";
             var input = File.ReadAllLines(inputFile).ToList();
 
             Run(input);
@@ -36,32 +37,31 @@ namespace Day22
         {
             // map values - 0=Empty, 1=Open, 2=Wall
             var cursor = new Cursor();
-            int[,] map = ReadInput(input, out List<Instruction> instructions, cursor);
+            var instructions = new List<Instruction>();
+            int[,] map = ReadInput(input, instructions, cursor);
             cursor.FacingSide =  Facing.Right;
 
             instructions.ForEach(i =>
             {
-                Move(map, i, cursor);
+                cursor = Move(map, i, cursor);
             });
 
-            return 1000 * cursor.Row + 4 * cursor.Col + (long)cursor.FacingSide;
+            return 1000 * (cursor.Row + 1) + 4 * (cursor.Col + 1) + (long)cursor.FacingSide;
         }
 
-        private static void Move(int[,] map, Instruction i, Cursor cursor)
+        private static Cursor Move(int[,] map, Instruction i, Cursor cursor)
         {
-            int rows = map.GetLength(0);
-            int cols = map.GetLength(1);
-            cursor.Turn(i.Direction);
+            if (i.Direction != ' ') cursor.Turn(i.Direction);
 
             for(int x=0; x< i.Steps; x++)
             {
-                Cursor next = GetNextStep(map, cursor, i.Direction);
+                Cursor next = GetNextStep(map, cursor);
 
                 if (map[next.Row, next.Col] == 0)
                 {
-                    while (map[next.Row, next.Col] != 0)
+                    while (map[next.Row, next.Col] == 0)
                     {
-                        next = GetNextStep(map, next, i.Direction);
+                        next = GetNextStep(map, next);
                     }
                 }
                 if (map[next.Row, next.Col] == 2) break; // Wall
@@ -72,22 +72,69 @@ namespace Day22
                     continue;
                 }
             }
+            return cursor;
         }
 
-        private static Cursor GetNextStep(int[,] map, Cursor cursor, char direction)
+        private static Cursor GetNextStep(int[,] map, Cursor cursor)
         {
-            throw new NotImplementedException();
-        }
+            int rows = map.GetLength(0);
+            int cols = map.GetLength(1);
 
-        private static int[,] ReadInput(List<string> input, out List<Instruction> instructions, Cursor cursor)
-        {
-            var maxColumns = input.Select(l => l.Length).Max();
-            input.ForEach(l =>
+            var next = new Cursor { Row = cursor.Row, Col = cursor.Col, FacingSide = cursor.FacingSide};
+
+            switch (next.FacingSide)
             {
-                
-            });
+                case Facing.Right:
+                    next.Col = next.Col == cols -1 ? 0 : next.Col + 1;
+                    break;
+                case Facing.Left:
+                    next.Col = next.Col == 0 ? cols - 1 : next.Col - 1;
+                    break;
+                case Facing.Down:
+                    next.Row = next.Row == rows - 1 ? 0 : next.Row + 1;
+                    break;
+                case Facing.Up:
+                    next.Row = next.Row == 0 ? rows - 1 : next.Row - 1;
+                    break;
+            }
+            return next;
+        }
 
-            throw new NotImplementedException();
+        private static int[,] ReadInput(List<string> input, List<Instruction> instructions, Cursor cursor)
+        {
+            var chunks = input.ChunkBy(string.Empty);
+            var maxColumns = chunks.First().Select(l => l.Length).Max();
+            int[,] map = new int[chunks[0].Length, maxColumns];
+
+            cursor.Col = -1;
+
+            for (int r = 0; r < chunks[0].Length; r++)
+            {
+                for(int c = 0; c < chunks[0][r].Length; c++)
+                {
+                    var val = chunks[0][r][c];
+                    if (cursor.Col == -1 && val != ' ') cursor.Col = c - 1;
+                    map[r, c] = val == ' ' ? 0 : val == '.' ? 1 : 2;
+                }
+            }
+
+            char direction = ' ';
+            string currentNum = string.Empty;
+            for (int i = 0; i < chunks[1][0].Length; i++)
+            {
+                if (chunks[1][0][i] == 'R' || chunks[1][0][i] == 'L')
+                {
+                    instructions.Add(new Instruction { Direction = direction, Steps = int.Parse(currentNum) });
+                    direction = chunks[1][0][i];
+                    currentNum = string.Empty;
+                    continue;
+                }
+                currentNum = currentNum + chunks[1][0][i];
+            }
+
+            instructions.Add(new Instruction { Direction = direction, Steps = int.Parse(currentNum) });
+
+            return map;
         }
 
         class Instruction
