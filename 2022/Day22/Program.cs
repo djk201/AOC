@@ -57,7 +57,7 @@ namespace Day22
             {
                 Cursor next = GetNextStep(map, cursor);
 
-                if (map[next.Row, next.Col] == 0)
+                if (map[next.Row, next.Col] == 0) // Empty
                 {
                     while (map[next.Row, next.Col] == 0)
                     {
@@ -66,7 +66,7 @@ namespace Day22
                 }
                 if (map[next.Row, next.Col] == 2) break; // Wall
 
-                if (map[next.Row, next.Col] == 1)
+                if (map[next.Row, next.Col] == 1) // Open
                 {
                     cursor = next;
                     continue;
@@ -155,11 +155,11 @@ namespace Day22
                 switch (direction)
                 {
                     case 'R':
-                        side = side == 3 ? side = 0 : side + 1;
+                        side = side == 3 ? 0 : side + 1;
                         break;
                     case 'L':
                     default:
-                        side = side == 0 ? side = 3 : side - 1;
+                        side = side == 0 ? 3 : side - 1;
                         break;
                 }
                 FacingSide = (Facing)side;
